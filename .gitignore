@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# secrets — never commit API keys
+.env
+.env.*
+!.env.example
+
+# local, machine-specific Claude Code settings
+.claude/settings.local.json
+
+# build output
+dist/
+build/
+.next/
+out/
+
+# macOS
+.DS_Store
+
+# typescript incremental build cache
+*.tsbuildinfo
+
+# local Claude Code tooling scaffolding — not part of the site
+.claude/
+.agents/
+.mcp.json
+skills-lock.json
+
+# vercel
+.vercel

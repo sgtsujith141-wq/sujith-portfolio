@@ -1,0 +1,330 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ *  SUJITH C — design tokens
+ *  Near-black graphite base, soft off-white text, cold electric cyan.
+ * ------------------------------------------------------------------ */
+
+@theme {
+  --color-void: #060709;
+  --color-base: #08090c;
+  --color-surface: #0b0d11;
+  --color-raise: #101319;
+  --color-elevate: #151922;
+
+  --color-ink: #e9ebef;
+  --color-muted: #939aa6;
+  --color-faint: #5b616e;
+  --color-ghost: #363b45;
+
+  --color-line: #1b1f27;
+  --color-line-soft: #14181f;
+
+  --color-accent: #45d4ee;
+  --color-accent-deep: #1b9fba;
+  --color-accent-wash: #0d2b33;
+  --color-violet: #8b7cf6;
+  --color-signal: #4ade80;
+  --color-warn: #f0b429;
+
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-jb), ui-monospace, "SF Mono", monospace;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-base);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-accent) 26%, transparent);
+    color: #ffffff;
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-void);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line);
+    border: 2px solid var(--color-void);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ghost);
+  }
+}
+
+@layer utilities {
+  /* Small technical label — used for every meta/status string on the site. */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-faint);
+  }
+
+  .label-sm {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+  }
+
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Hairline that survives fractional DPR without going invisible. */
+  .hairline {
+    box-shadow: inset 0 0 0 0.5px var(--color-line);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Fine engineering grid, used at very low opacity behind sections. */
+  .grid-field {
+    background-image:
+      linear-gradient(to right, var(--color-line-soft) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-line-soft) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  .mask-fade-b {
+    mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+  }
+  .mask-fade-edges {
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  }
+
+  .accent-glow {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--color-accent) 30%, transparent),
+      0 0 22px -6px color-mix(in oklab, var(--color-accent) 45%, transparent);
+  }
+}
+
+/* Scan sweep used by the intro sequence and the section rules. */
+@keyframes sweep-y {
+  from {
+    transform: translate3d(0, -100%, 0);
+  }
+  to {
+    transform: translate3d(0, 100vh, 0);
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes trace {
+  from {
+    stroke-dashoffset: var(--trace-len);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2.4s var(--ease-in-out-quart) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ *  Intro state machine.
+ *
+ *  The blocking script in app/layout.tsx stamps <html data-intro> before
+ *  first paint. States run:
+ *
+ *    pending   sequence playing; page hidden, heading hidden
+ *    morphing  page revealed, heading still hidden while the intro name
+ *              travels onto its box
+ *    settling  heading cross-fades in over the arriving intro name
+ *    done      overlay removed
+ *
+ *  There is no opaque backdrop element — the body itself darkens, which
+ *  keeps the shared world canvas visible right through the sequence.
+ * ------------------------------------------------------------------ */
+
+html[data-intro="done"] .intro-root {
+  display: none !important;
+}
+
+html[data-intro="pending"] body {
+  background-color: var(--color-void);
+}
+
+body {
+  transition: background-color 700ms var(--ease-out-expo);
+}
+
+#site {
+  position: relative;
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 560ms var(--ease-out-expo);
+}
+
+html[data-intro="pending"] #site {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The page's own heading stays hidden until the intro name has landed on
+ * it, so the two are never on screen together. */
+[data-morph-target] {
+  transition: opacity 200ms var(--ease-out-expo);
+}
+
+/* !important because the heading is a motion element and Framer writes its
+ * opacity inline, which would otherwise win over this gate. */
+html[data-intro="pending"] [data-morph-target],
+html[data-intro="morphing"] [data-morph-target] {
+  opacity: 0 !important;
+}
+
+/* One glitch beat as the name locks in — two clipped chromatic copies,
+ * 1px apart. Deliberately short; anything longer reads as a cliché. */
+.intro-glitch {
+  animation: glitch-shift 150ms steps(2, end) 1;
+}
+.intro-glitch::before,
+.intro-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  font-family: var(--font-mono);
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  pointer-events: none;
+}
+.intro-glitch::before {
+  color: var(--color-accent);
+  transform: translate3d(-1.5px, 0, 0);
+  clip-path: inset(0 0 58% 0);
+  opacity: 0.7;
+}
+.intro-glitch::after {
+  color: var(--color-violet);
+  transform: translate3d(1.5px, 0, 0);
+  clip-path: inset(56% 0 0 0);
+  opacity: 0.55;
+}
+
+@keyframes glitch-shift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Topology traffic — a short dash walking each edge. Cheap (one animated
+ * property, compositor-friendly) and it makes the diagram feel live
+ * without any per-frame JavaScript. */
+.topology-traffic {
+  stroke-dasharray: 5 420;
+  stroke-dashoffset: 425;
+  animation: topology-walk 4.2s linear infinite;
+}
+
+@keyframes topology-walk {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topology-traffic {
+    display: none;
+  }
+}
+
+/* cmdk group headings. Tailwind arbitrary variants cannot reach a custom
+ * utility, so the technical-label treatment is applied here directly. */
+[cmdk-group-heading] {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-ghost);
+  padding: 14px 10px 7px;
+}
+
+[cmdk-group]:not(:first-child) [cmdk-group-heading] {
+  border-top: 1px solid var(--color-line-soft);
+  margin-top: 6px;
+  padding-top: 14px;
+}
