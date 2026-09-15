@@ -4,6 +4,15 @@
  *  hard-coded into a component.
  * ------------------------------------------------------------------ */
 
+/* Environment variables are frequently *defined but blank* on hosts and CI
+ * (Vercel project settings, GitHub Actions, Docker `--env`). `??` only falls
+ * back on undefined, so a blank value would sail through and, in the case of
+ * the site URL, crash `new URL()` during the build. Treat blank as absent. */
+const env = (value: string | undefined): string | undefined => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+};
+
 /** The real PDF lives at public/Sujith_C_Resume.pdf, so it is served from
  *  /Sujith_C_Resume.pdf. Set this back to false if the file is ever removed
  *  and every Resume affordance hides itself rather than 404ing. */
@@ -11,7 +20,7 @@ const RESUME_PDF_PRESENT = true;
 
 const RESUME_FILENAME = "Sujith_C_Resume.pdf";
 
-const RESUME_URL = process.env.NEXT_PUBLIC_RESUME_URL ?? `/${RESUME_FILENAME}`;
+const RESUME_URL = env(process.env.NEXT_PUBLIC_RESUME_URL) ?? `/${RESUME_FILENAME}`;
 
 export const profile = {
   name: "Sujith C",
@@ -52,7 +61,7 @@ export const profile = {
   },
 
   contact: {
-    email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "sgt.sujith.141@gmail.com",
+    email: env(process.env.NEXT_PUBLIC_CONTACT_EMAIL) ?? "sgt.sujith.141@gmail.com",
     /** Display form. `phoneHref` is the dialable form. */
     phone: "+91 70221 34144",
     phoneHref: "tel:+917022134144",
@@ -62,14 +71,14 @@ export const profile = {
     href: RESUME_URL,
     filename: RESUME_FILENAME,
     /** When false, every Resume button and palette action is hidden. */
-    available: RESUME_PDF_PRESENT || Boolean(process.env.NEXT_PUBLIC_RESUME_URL),
+    available: RESUME_PDF_PRESENT || Boolean(env(process.env.NEXT_PUBLIC_RESUME_URL)),
   },
 
   meta: {
     title: "Sujith C — Cybersecurity, Systems, Software",
     description:
       "Second-year CSE student at BMSIT focused on cybersecurity, systems and networking. Self-hosted Debian infrastructure, security tooling, and useful software.",
-    url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://sujithc.dev",
+    url: env(process.env.NEXT_PUBLIC_SITE_URL) ?? "https://sujithc.dev",
   },
 } as const;
 

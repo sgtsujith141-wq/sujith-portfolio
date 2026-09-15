@@ -17,8 +17,19 @@ const jetbrains = JetBrains_Mono({
   weight: ["400", "500"],
 });
 
+/* Social-card metadata must never be able to fail a production build, so a
+ * malformed origin degrades to "no metadataBase" instead of throwing during
+ * page-data collection. */
+function metadataBase(url: string): URL | undefined {
+  try {
+    return new URL(url);
+  } catch {
+    return undefined;
+  }
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(profile.meta.url),
+  metadataBase: metadataBase(profile.meta.url),
   title: {
     default: profile.meta.title,
     template: `%s — ${profile.name}`,
