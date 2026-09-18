@@ -48,7 +48,7 @@ export function NavRail() {
       <a
         href="#introduction"
         data-enter="nav"
-        style={{ "--enter-delay": "1900ms" } as React.CSSProperties}
+        style={{ "--enter-delay": "1600ms" } as React.CSSProperties}
         className="fixed left-6 top-6 z-[100] hidden items-center gap-3 lg:flex"
         aria-label={`${profile.name} — back to top`}
       >
@@ -62,7 +62,7 @@ export function NavRail() {
       <nav
         aria-label="Sections"
         data-enter="nav"
-        style={{ "--enter-delay": "2000ms" } as React.CSSProperties}
+        style={{ "--enter-delay": "1650ms" } as React.CSSProperties}
         className="fixed right-6 top-1/2 z-[100] hidden -translate-y-1/2 lg:block"
       >
         <ol className="relative flex flex-col items-end gap-4">

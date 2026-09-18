@@ -78,7 +78,7 @@ export function ArchitectureExplorer() {
   }
 
   return (
-    <div className="hairline bg-surface/60">
+    <div className="hairline bg-surface">
       <div className="flex flex-wrap items-center gap-2 border-b border-line-soft p-3" role="tablist" aria-label="Project architecture">
         {withArchitecture.map((p) => (
           <button

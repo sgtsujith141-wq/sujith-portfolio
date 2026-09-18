@@ -63,7 +63,7 @@ export function CryptoVisual() {
   });
 
   return (
-    <div className="hairline bg-surface/60">
+    <div className="hairline bg-surface">
       <div className="flex items-center justify-between border-b border-line-soft px-4 py-3">
         <span className="label">How a scan takes shape</span>
         <span className="label-xs border border-warn/40 px-2 py-1 text-warn">Illustrative — not a scan result</span>

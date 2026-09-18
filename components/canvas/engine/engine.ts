@@ -6,6 +6,7 @@ import {
   formation,
   nodeDepth,
   type Camera,
+  type Stage,
   type Target,
   type Viewport,
 } from "./formations";
@@ -122,6 +123,8 @@ export class LivingSystemEngine {
   private progress = 0;
   private focus: ProjectSlug | null = null;
   private hover: string | null = null;
+  private stage: Stage | null = null;
+  private phase = 1;
 
   private pointer = { x: 0, y: 0, on: false };
   private pointerEase = { x: 0, y: 0 };
@@ -191,6 +194,33 @@ export class LivingSystemEngine {
   setHover(id: string | null) {
     this.hover = id;
     this.dirty = true;
+  }
+
+  /** Progress of the pinned Selected Work introduction. */
+  setPhase(value: number) {
+    const next = Math.max(0, Math.min(1, value));
+    if (Math.abs(next - this.phase) < 0.004) return;
+    this.phase = next;
+    if (this.section === "work" && !this.focus) this.retarget();
+  }
+
+  /** Viewport rectangle the focused cluster should occupy; null releases it. */
+  setStage(stage: Stage | null) {
+    const same =
+      (stage === null && this.stage === null) ||
+      (stage !== null &&
+        this.stage !== null &&
+        Math.abs(stage.x - this.stage.x) < 1 &&
+        Math.abs(stage.y - this.stage.y) < 1 &&
+        Math.abs(stage.w - this.stage.w) < 1 &&
+        Math.abs(stage.h - this.stage.h) < 1);
+    if (same) return;
+    this.stage = stage;
+    this.retarget();
+    if (this.opts.reduced) {
+      this.snap();
+      this.draw();
+    }
   }
 
   setPointer(x: number, y: number, on: boolean) {
@@ -291,12 +321,17 @@ export class LivingSystemEngine {
       progress: this.progress,
       focus: this.focus,
       hover: this.hover,
+      stage: this.stage,
+      phase: this.phase,
     });
+    // Labelled nodes never run under the navigation rail or off the edges.
+    const minX = 20;
+    const maxX = this.narrow ? this.w - 20 : this.w - 230;
     for (const n of this.nodes) {
       const target: Target | undefined = t[n.id];
       if (!target) continue;
-      n.tx = target.x;
-      n.ty = target.y;
+      n.tx = target.la > 0.05 ? Math.min(maxX, Math.max(minX, target.x)) : target.x;
+      n.ty = Math.min(this.h - 12, Math.max(12, target.y));
       n.ta = target.a;
       n.tla = target.la;
       n.tlit = target.lit;

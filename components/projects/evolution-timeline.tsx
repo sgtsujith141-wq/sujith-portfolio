@@ -41,7 +41,7 @@ export function EvolutionTimeline() {
         ))}
       </ol>
 
-      <Reveal className="mt-px overflow-x-auto hairline bg-surface/60">
+      <Reveal className="mt-px overflow-x-auto hairline bg-surface">
         <table className="w-full min-w-[560px] text-left text-sm">
           <caption className="label px-5 pb-2 pt-4 text-left">What changed in the rewrite — from the MVP README</caption>
           <thead>

@@ -38,7 +38,7 @@ export function MobileNav() {
     <div className="lg:hidden">
       <div
         data-enter="nav"
-        style={{ "--enter-delay": "1900ms" } as React.CSSProperties}
+        style={{ "--enter-delay": "1600ms" } as React.CSSProperties}
         className="fixed inset-x-0 top-0 z-[100] flex items-center justify-between border-b border-line-soft bg-base/80 px-4 py-3 backdrop-blur-md"
       >
         <a href="#introduction" className="flex items-center gap-2.5" aria-label={`${profile.name} — back to top`}>

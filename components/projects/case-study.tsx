@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useCallback, type ReactNode } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { statusMeta } from "@/content/projects";
 import type { Project } from "@/lib/types";
@@ -22,39 +22,29 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   project: Project;
+  /** Sticky side column content (galleries). Gets a system window above it. */
   visual?: ReactNode;
-  /** Rendered full-width beneath the columns (used by the evolution timeline). */
+  /** Explanatory visual rendered inside the reading column after Solution. */
+  explainer?: ReactNode;
+  /** Rendered full-width beneath the columns. */
   wide?: ReactNode;
-  onEnter: (slug: Project["slug"] | null) => void;
+  /** Lets the Work scene find this article and its system window. */
+  register: (slug: Project["slug"], article: HTMLElement | null, stage: HTMLElement | null) => void;
 }
 
-export function CaseStudy({ project, visual, wide, onEnter }: Props) {
-  const ref = useRef<HTMLElement>(null);
-  const { setFocus, setHover } = useLivingSystem();
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry) return;
-        if (entry.isIntersecting) {
-          setFocus(project.slug);
-          onEnter(project.slug);
-        }
-      },
-      { rootMargin: "-45% 0px -45% 0px", threshold: 0 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [project.slug, setFocus, onEnter]);
+export function CaseStudy({ project, visual, explainer, wide, register }: Props) {
+  const { setHover } = useLivingSystem();
+  const articleRef = useCallback(
+    (el: HTMLElement | null) => register(project.slug, el, el?.querySelector<HTMLElement>("[data-stage]") ?? null),
+    [project.slug, register],
+  );
 
   const status = statusMeta[project.status];
 
   return (
     <article
       id={`project-${project.slug}`}
-      ref={ref}
+      ref={articleRef}
       aria-labelledby={`project-${project.slug}-title`}
       className="scroll-mt-24 border-t border-line-soft py-20 lg:py-28"
     >
@@ -115,6 +105,8 @@ export function CaseStudy({ project, visual, wide, onEnter }: Props) {
               <p key={i}>{p}</p>
             ))}
           </Block>
+
+          {explainer ? <div className="mt-10">{explainer}</div> : null}
 
           <Block title="How it works" wide>
             <ol className="grid gap-px bg-line-soft sm:grid-cols-2">
@@ -178,7 +170,9 @@ export function CaseStudy({ project, visual, wide, onEnter }: Props) {
           </div>
         </div>
 
-        {/* Visual column */}
+        {/* Visual column. The system window at its top is deliberately
+            empty: the background engine places this project's cluster
+            exactly inside it, measured from the DOM every scroll frame. */}
         {visual ? (
           <div className="hidden lg:col-span-5 lg:block">
             <div
@@ -186,6 +180,13 @@ export function CaseStudy({ project, visual, wide, onEnter }: Props) {
               onMouseEnter={() => setHover(project.slug)}
               onMouseLeave={() => setHover(null)}
             >
+              <div data-stage aria-hidden className="relative h-44">
+                <span className="label-xs absolute left-0 top-0 text-ghost">
+                  Living system · {project.name} cluster
+                </span>
+                <span className="absolute bottom-0 left-0 h-3 w-3 border-b border-l border-line" />
+                <span className="absolute bottom-0 right-0 h-3 w-3 border-b border-r border-line" />
+              </div>
               <Reveal delay={0.2}>{visual}</Reveal>
             </div>
           </div>

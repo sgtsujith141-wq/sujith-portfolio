@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { projects, cryptodrishti, surakshascore, surakshascoreMvp, aetherHealth } from "@/content/projects";
 import type { ProjectSlug } from "@/lib/types";
@@ -12,7 +12,7 @@ import { Gallery } from "@/components/projects/gallery";
 import { CryptoVisual } from "@/components/projects/crypto-visual";
 import { SignalsModel } from "@/components/projects/signals-model";
 import { EvolutionTimeline } from "@/components/projects/evolution-timeline";
-import { AetherShowcase } from "@/components/projects/aether-showcase";
+import { AetherShowcase, AetherFacts } from "@/components/projects/aether-showcase";
 
 /* ══════════════════════════════════════════════════════════════════════
  *  02 · SELECTED WORK
@@ -27,8 +27,59 @@ import { AetherShowcase } from "@/components/projects/aether-showcase";
 export function Work() {
   const scope = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<ProjectSlug | null>(null);
-  const { setFocus } = useLivingSystem();
-  const onEnter = useCallback((slug: ProjectSlug | null) => setActive(slug), []);
+  const { setFocus, setStage, setPhase } = useLivingSystem();
+  // GSAP's context must not be rebuilt when the engine becomes ready, so
+  // the phase callback is read through a ref inside the timeline.
+  const phaseRef = useRef(setPhase);
+  useEffect(() => {
+    phaseRef.current = setPhase;
+  }, [setPhase]);
+  const registry = useRef(new Map<ProjectSlug, { article: HTMLElement; stage: HTMLElement | null }>());
+  const activeRef = useRef<ProjectSlug | null>(null);
+
+  const register = useCallback((slug: ProjectSlug, article: HTMLElement | null, stage: HTMLElement | null) => {
+    if (article) registry.current.set(slug, { article, stage });
+    else registry.current.delete(slug);
+  }, []);
+
+  /* Which case study is being read is derived from scroll position, not
+   * from observer events, so it is always correct after jumps, anchor
+   * navigation and the pinned intro. The article containing the viewport
+   * midline wins; none means the intro or the space between sections. */
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const mid = window.innerHeight * 0.5;
+      let found: ProjectSlug | null = null;
+      for (const [slug, { article }] of registry.current) {
+        const r = article.getBoundingClientRect();
+        if (r.top <= mid && r.bottom >= mid) {
+          found = slug;
+          break;
+        }
+      }
+      if (found !== activeRef.current) {
+        activeRef.current = found;
+        setActive(found);
+        setFocus(found);
+        setStage(found ? (registry.current.get(found)?.stage ?? null) : null);
+      }
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      setFocus(null);
+      setStage(null);
+    };
+  }, [setFocus, setStage]);
 
   useGSAP(
     () => {
@@ -36,6 +87,7 @@ export function Work() {
       const worlds = gsap.utils.toArray<HTMLElement>("[data-world]");
       if (reduced) {
         gsap.set(worlds, { opacity: 1, y: 0 });
+        phaseRef.current(1);
         return;
       }
       const mm = gsap.matchMedia();
@@ -48,7 +100,8 @@ export function Work() {
             pin: true,
             scrub: 0.6,
             anticipatePin: 1,
-            onLeave: () => setFocus(null),
+            // The background reorganises in step with the pin.
+            onUpdate: (self) => phaseRef.current(self.progress),
           },
         });
         tl.fromTo(
@@ -58,6 +111,7 @@ export function Work() {
         ).to({}, { duration: 0.35 });
       });
       mm.add("(max-width: 1023px)", () => {
+        phaseRef.current(1);
         worlds.forEach((el, i) => {
           gsap.fromTo(
             el,
@@ -72,8 +126,10 @@ export function Work() {
           );
         });
       });
-      // The pinned block changes the layout; recalculate everything below it.
+      // The pinned block changes the layout; recalculate everything below
+      // it now and again once web fonts have settled the text metrics.
       ScrollTrigger.refresh();
+      document.fonts?.ready.then(() => ScrollTrigger.refresh());
     },
     { scope },
   );
@@ -112,37 +168,32 @@ export function Work() {
 
         <CaseStudy
           project={cryptodrishti}
-          onEnter={onEnter}
-          visual={
-            <div className="space-y-4">
-              <CryptoVisual />
-              <Gallery shots={cryptodrishti.screenshots} frame="desktop" projectName={cryptodrishti.name} />
-            </div>
-          }
+          register={register}
+          explainer={<CryptoVisual />}
+          visual={<Gallery shots={cryptodrishti.screenshots} frame="desktop" projectName={cryptodrishti.name} />}
         />
 
         <CaseStudy
           project={surakshascore}
-          onEnter={onEnter}
+          register={register}
+          explainer={<SignalsModel />}
           visual={
-            <div className="space-y-4">
-              <SignalsModel />
-              <Gallery
-                shots={surakshascore.screenshots}
-                frame="phone"
-                label="Real UI over demo data"
-                projectName={surakshascore.name}
-              />
-            </div>
+            <Gallery
+              shots={surakshascore.screenshots}
+              frame="phone"
+              label="Real UI over demo data"
+              projectName={surakshascore.name}
+            />
           }
         />
 
-        <CaseStudy project={surakshascoreMvp} onEnter={onEnter} wide={<EvolutionTimeline />} />
+        <CaseStudy project={surakshascoreMvp} register={register} wide={<EvolutionTimeline />} />
 
         <CaseStudy
           project={aetherHealth}
-          onEnter={onEnter}
-          visual={<AetherShowcase shots={aetherHealth.screenshots} />}
+          register={register}
+          visual={<AetherFacts />}
+          wide={<AetherShowcase shots={aetherHealth.screenshots} />}
         />
       </div>
     </section>

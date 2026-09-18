@@ -4,7 +4,7 @@ import { formatDate } from "@/lib/utils";
 /** Expandable engineering deep dive: the verification log for every claim in the case study. */
 export function DeepDive({ project }: { project: Project }) {
   return (
-    <details className="group hairline bg-surface/50">
+    <details className="group hairline bg-surface">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 [&::-webkit-details-marker]:hidden">
         <span className="flex items-center gap-3">
           <span className="label text-ink">Engineering deep dive</span>

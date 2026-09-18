@@ -21,12 +21,12 @@ export function SignalsModel() {
   const c = scoringCategories[cat]!;
 
   return (
-    <div className="hairline bg-surface/60">
+    <div className="hairline bg-surface">
       <div className="border-b border-line-soft px-5 py-3">
         <span className="label">The scoring model — from the repository config</span>
       </div>
 
-      <div className="grid gap-px bg-line-soft md:grid-cols-2">
+      <div className="grid gap-px bg-line-soft sm:grid-cols-2">
         {/* Evidence tiers */}
         <div className="bg-base p-5">
           <p className="text-xs text-faint">Evidence tier → weight factor</p>

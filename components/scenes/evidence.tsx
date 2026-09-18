@@ -48,7 +48,7 @@ export function Evidence() {
 
         <Reveal className="mt-16">
           <h3 className="label">Continuous integration, as configured in each repository</h3>
-          <div className="mt-5 overflow-x-auto hairline bg-surface/60">
+          <div className="mt-5 overflow-x-auto hairline bg-surface">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead>
                 <tr className="border-b border-line-soft">

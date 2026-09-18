@@ -15,11 +15,13 @@ import { useReducedMotion } from "@/hooks/use-reduced-motion";
  *  Choreography (from the moment the page is interactive):
  *    0ms     the canvas shows a single pulse — the system initialising
  *    200ms   ignite(): nodes emerge from the centre, depth by depth
- *    700ms   the name resolves, letter by letter
- *    1300ms  the supporting statement
- *    1800ms  actions
- *    1900ms  navigation rail / mobile bar
- *    2300ms  scroll cue
+ *    500ms   the name resolves, letter by letter (40ms apart)
+ *    1100ms  the supporting statement
+ *    1500ms  actions
+ *    1600ms  navigation rail / mobile bar
+ *    1900ms  scroll cue
+ *  The largest element (the name) is fully painted by ~1.7s, which keeps
+ *  Largest Contentful Paint inside the "good" threshold.
  *
  *  Nothing blocks. Scrolling is available throughout, no storage is read,
  *  and every real page load replays it. prefers-reduced-motion renders
@@ -62,7 +64,7 @@ export function Hero() {
       {/* Corner coordinates — real counts from content/graph.ts. */}
       <p
         data-enter
-        style={delay(2100)}
+        style={delay(1800)}
         className="label absolute right-6 top-6 hidden text-right lg:right-24 lg:block"
       >
         Living system graph
@@ -81,7 +83,7 @@ export function Hero() {
 
         <h1
           id="hero-title"
-          className="display mt-8 text-[clamp(3.4rem,13.5vw,11.5rem)] text-ink"
+          className="display mt-8 text-[clamp(3.6rem,14.5vw,11.5rem)] text-ink"
           aria-label={profile.name}
         >
           {letters.map((ch, i) => (
@@ -89,7 +91,7 @@ export function Hero() {
               key={i}
               aria-hidden
               data-enter="rise"
-              style={delay(700 + i * 55)}
+              style={delay(500 + i * 40)}
               className="inline-block"
             >
               {ch === " " ? " " : ch}
@@ -97,43 +99,41 @@ export function Hero() {
           ))}
         </h1>
 
-        <div className="mt-10 grid gap-8 lg:mt-12 lg:grid-cols-12 lg:gap-12">
-          <div className="lg:col-span-7">
-            <p data-enter="rise" style={delay(1300)} className="text-lg text-ink sm:text-xl">
-              {profile.role}
-            </p>
-            <p
-              data-enter="rise"
-              style={delay(1420)}
-              className="mt-3 max-w-xl text-base leading-relaxed text-muted sm:text-lg"
-            >
-              {profile.statement}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-start gap-3 lg:col-span-5 lg:justify-end">
-            <span data-enter="rise" style={delay(1800)}>
+        <div className="mt-10 max-w-2xl lg:mt-12">
+          <p data-enter="rise" style={delay(1100)} className="text-lg text-ink sm:text-xl">
+            {profile.role}
+          </p>
+          <p
+            data-enter="rise"
+            style={delay(1200)}
+            className="mt-3 max-w-xl text-base leading-relaxed text-muted sm:text-lg"
+          >
+            {profile.statement}
+          </p>
+        </div>
+        <div className="mt-9 flex flex-wrap items-center gap-3">
+            <span data-enter="rise" style={delay(1500)}>
               <Action href="#work" variant="primary" icon="down">
                 Explore work
               </Action>
             </span>
-            <span data-enter="rise" style={delay(1880)}>
+            <span data-enter="rise" style={delay(1560)}>
               <Action href={profile.links.github} external>
                 GitHub
               </Action>
             </span>
-            <span data-enter="rise" style={delay(1960)}>
+            <span data-enter="rise" style={delay(1620)}>
               <Action href={profile.links.linkedin} external>
                 LinkedIn
               </Action>
             </span>
             {profile.resume.available ? (
-              <span data-enter="rise" style={delay(2040)}>
+              <span data-enter="rise" style={delay(1680)}>
                 <Action href={profile.resume.href} external icon="file" ariaLabel="Open resume (PDF)">
                   Resume
                 </Action>
               </span>
             ) : null}
-          </div>
         </div>
       </motion.div>
 
@@ -141,7 +141,7 @@ export function Hero() {
       <a
         href="#work"
         data-enter
-        style={delay(2300)}
+        style={delay(1900)}
         className="group absolute bottom-8 left-6 flex items-center gap-4 lg:left-12"
         aria-label="Scroll to Selected Work"
       >

@@ -22,7 +22,7 @@ export function Gallery({ shots, frame, label = "Real screenshots", projectName 
 
   return (
     <figure
-      className="hairline bg-surface/60"
+      className="hairline bg-surface"
       aria-roledescription="carousel"
       aria-label={`${projectName} screenshots`}
       onKeyDown={(e) => {
@@ -43,7 +43,7 @@ export function Gallery({ shots, frame, label = "Real screenshots", projectName 
         <div
           className={cn(
             "relative overflow-hidden border border-line bg-void",
-            frame === "phone" ? "w-[min(100%,260px)] rounded-[22px] border-line-strong p-1.5" : "w-full",
+            frame === "phone" ? "w-[min(100%,224px)] rounded-[22px] border-line-strong p-1.5" : "w-full",
           )}
           style={frame === "desktop" ? { aspectRatio: `${shot.width} / ${shot.height}` } : undefined}
         >
@@ -53,7 +53,7 @@ export function Gallery({ shots, frame, label = "Real screenshots", projectName 
             alt={shot.alt}
             width={shot.width}
             height={shot.height}
-            sizes={frame === "phone" ? "260px" : "(min-width: 1024px) 40vw, 92vw"}
+            sizes={frame === "phone" ? "224px" : "(min-width: 1024px) 40vw, 92vw"}
             className={cn("h-auto w-full", frame === "phone" && "rounded-[16px]")}
             priority={false}
           />

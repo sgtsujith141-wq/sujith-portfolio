@@ -33,6 +33,10 @@ interface LivingSystemApi {
   ignite: () => void;
   setFocus: (slug: ProjectSlug | null) => void;
   setHover: (id: string | null) => void;
+  /** Element whose viewport rectangle the focused cluster should fill; null releases. */
+  setStage: (el: HTMLElement | null) => void;
+  /** Progress of the pinned Selected Work introduction, 0–1. */
+  setPhase: (value: number) => void;
 }
 
 const Ctx = createContext<LivingSystemApi | null>(null);
@@ -44,6 +48,8 @@ export function useLivingSystem(): LivingSystemApi {
       ignite: () => {},
       setFocus: () => {},
       setHover: () => {},
+      setStage: () => {},
+      setPhase: () => {},
     }
   );
 }
@@ -53,6 +59,8 @@ export function LivingSystem({ children }: { children: ReactNode }) {
   const engineRef = useRef<LivingSystemEngine | null>(null);
   const [ready, setReady] = useState(false);
   const pendingIgnite = useRef(false);
+  const stageEl = useRef<HTMLElement | null>(null);
+  const requestUpdate = useRef<() => void>(() => {});
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -101,10 +109,22 @@ export function LivingSystem({ children }: { children: ReactNode }) {
           if (!current) return;
           const progress = Math.max(0, Math.min(1, (mid - current.top) / current.height));
           engine.setSection(current.id, progress);
+          const el = stageEl.current;
+          if (el) {
+            const r = el.getBoundingClientRect();
+            engine.setStage(
+              r.width > 0 && r.height > 0
+                ? { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height }
+                : null,
+            );
+          } else {
+            engine.setStage(null);
+          }
         };
         const onScroll = () => {
           if (!scrollRaf) scrollRaf = requestAnimationFrame(update);
         };
+        requestUpdate.current = onScroll;
 
         const ro = new ResizeObserver(() => {
           measure();
@@ -137,6 +157,7 @@ export function LivingSystem({ children }: { children: ReactNode }) {
         document.addEventListener("visibilitychange", onVisibility);
 
         cleanup = () => {
+          requestUpdate.current = () => {};
           cancelAnimationFrame(scrollRaf);
           cancelAnimationFrame(pointerRaf);
           ro.disconnect();
@@ -167,8 +188,16 @@ export function LivingSystem({ children }: { children: ReactNode }) {
     () => ({
       ready,
       ignite,
-      setFocus: (slug) => engineRef.current?.setFocus(slug),
+      setFocus: (slug) => {
+        engineRef.current?.setFocus(slug);
+        requestUpdate.current();
+      },
       setHover: (id) => engineRef.current?.setHover(id),
+      setStage: (el) => {
+        stageEl.current = el;
+        requestUpdate.current();
+      },
+      setPhase: (value) => engineRef.current?.setPhase(value),
     }),
     [ready, ignite],
   );
