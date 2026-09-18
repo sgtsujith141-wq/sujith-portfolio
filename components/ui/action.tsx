@@ -1,82 +1,66 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ArrowDown, FileText } from "lucide-react";
+import { Magnetic } from "@/components/animations/magnetic";
 import { cn } from "@/lib/utils";
 
-/* One button language for the whole site: square corners, hairline border,
- * a corner tick that lights on hover, and an accent wash instead of a fill.
- * Buttons and links share it so an anchor never looks like a second system. */
+type Variant = "primary" | "secondary" | "ghost";
 
-const base =
-  "group relative inline-flex select-none items-center gap-2.5 px-4 py-3 text-[12px] font-medium tracking-[0.08em] uppercase transition-[color,background-color,border-color] duration-300 focus-visible:outline-1 focus-visible:outline-offset-2";
-
-const variants = {
-  primary:
-    "border border-accent/40 bg-accent/[0.07] text-accent hover:bg-accent/[0.13] hover:border-accent/70",
-  ghost:
-    "border border-line text-muted hover:border-ghost hover:text-ink hover:bg-raise/50",
-} as const;
-
-interface Props {
+interface ActionProps {
+  href: string;
   children: ReactNode;
-  href?: string;
-  onClick?: () => void;
-  variant?: keyof typeof variants;
+  variant?: Variant;
   external?: boolean;
+  icon?: "arrow" | "down" | "file" | "none";
   className?: string;
-  download?: boolean;
   ariaLabel?: string;
 }
 
+const styles: Record<Variant, string> = {
+  primary:
+    "bg-ink text-base hover:bg-white border border-ink",
+  secondary:
+    "border border-line-strong text-ink hover:border-accent-soft hover:text-accent-soft bg-base/40",
+  ghost: "text-muted hover:text-ink",
+};
+
+/** Every call to action on the site. Magnetic on fine pointers, capped at 6px. */
 export function Action({
-  children,
   href,
-  onClick,
-  variant = "ghost",
+  children,
+  variant = "secondary",
   external,
+  icon = "arrow",
   className,
   ariaLabel,
-}: Props) {
-  const content = (
-    <>
-      <span className="relative z-10 mono">{children}</span>
-      {external ? (
-        <ArrowUpRight
-          className="relative z-10 h-3 w-3 transition-transform duration-300 group-hover:-translate-y-px group-hover:translate-x-px"
-          strokeWidth={1.8}
-        />
-      ) : null}
-      {/* corner ticks */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute left-0 top-0 h-1.5 w-1.5 border-l border-t border-current opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-      />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute bottom-0 right-0 h-1.5 w-1.5 border-b border-r border-current opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-      />
-    </>
-  );
-
-  const cls = cn(base, variants[variant], className);
-
-  if (href) {
-    return (
+}: ActionProps) {
+  const Icon = icon === "arrow" ? ArrowUpRight : icon === "down" ? ArrowDown : icon === "file" ? FileText : null;
+  return (
+    <Magnetic>
       <a
         href={href}
         aria-label={ariaLabel}
-        className={cls}
-        {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+        target={external ? "_blank" : undefined}
+        rel={external ? "noreferrer" : undefined}
+        className={cn(
+          "group inline-flex items-center gap-2.5 px-5 py-3 text-sm font-medium transition-colors duration-300",
+          styles[variant],
+          className,
+        )}
       >
-        {content}
+        <span>{children}</span>
+        {Icon ? (
+          <Icon
+            aria-hidden
+            className={cn(
+              "h-4 w-4 transition-transform duration-300",
+              icon === "arrow" && "group-hover:-translate-y-0.5 group-hover:translate-x-0.5",
+              icon === "down" && "group-hover:translate-y-0.5",
+            )}
+          />
+        ) : null}
       </a>
-    );
-  }
-
-  return (
-    <button type="button" onClick={onClick} aria-label={ariaLabel} className={cls}>
-      {content}
-    </button>
+    </Magnetic>
   );
 }

@@ -1,109 +1,142 @@
-/* Shared content types. Every data/*.ts file is typed against these, so the
- * editor catches a malformed entry before the page ever renders it. */
+/* ══════════════════════════════════════════════════════════════════════
+ *  CONTENT TYPES
+ *
+ *  Every piece of copy on the site is typed here and lives under
+ *  content/. Components never hold facts. A field that carries a claim
+ *  about a repository also carries where that claim came from, so the
+ *  Engineering Evidence section can print its source and date.
+ * ══════════════════════════════════════════════════════════════════════ */
 
-export type ProjectStatus = "shipped" | "active" | "prototype" | "archived" | "planned";
+export type SectionId =
+  | "introduction"
+  | "work"
+  | "evidence"
+  | "about"
+  | "exploration"
+  | "connect";
 
-export interface ProjectImage {
-  /** Path under /public, e.g. "/projects/case-001/overview.png" */
+export interface NavSection {
+  id: SectionId;
+  /** Two-digit index rendered beside the label: "01". */
+  index: string;
+  label: string;
+  /** Very short form for the mobile bar. */
+  short: string;
+}
+
+export type ProjectSlug =
+  | "cryptodrishti"
+  | "surakshascore"
+  | "surakshascore-mvp"
+  | "aether-health";
+
+export interface Screenshot {
   src: string;
   alt: string;
-  /** Optional caption shown under the frame inside the case file. */
-  caption?: string;
+  width: number;
+  height: number;
+  caption: string;
 }
 
-export interface ArchitectureNode {
+/** A fact with provenance. `date` is the day it was checked. */
+export interface Verification {
+  claim: string;
+  source: string;
+  date: string;
+  method: string;
+}
+
+export interface Metric {
   label: string;
+  value: string;
+  note?: string;
+}
+
+export interface Step {
+  title: string;
   detail: string;
 }
+
+export interface Decision {
+  title: string;
+  body: string;
+  tradeoff: string;
+}
+
+export interface ArchGroup {
+  id: string;
+  label: string;
+}
+
+export interface ArchNode {
+  id: string;
+  label: string;
+  detail: string;
+  group: string;
+  /** Marks a component the repository itself documents as a known gap. */
+  caveat?: string;
+}
+
+export interface ArchEdge {
+  from: string;
+  to: string;
+  label?: string;
+}
+
+export interface Architecture {
+  groups: ArchGroup[];
+  nodes: ArchNode[];
+  edges: ArchEdge[];
+}
+
+export type ProjectStatus = "active" | "prototype" | "archived";
 
 export interface Project {
-  /** URL-safe key. Also used for deep links (#case-001 style anchors). */
-  slug: string;
-  /** Rendered as CASE-001. Keep it two-to-three digits. */
-  caseId: string;
+  slug: ProjectSlug;
+  index: string;
   name: string;
+  tagline: string;
   category: string;
-  /** One line. Shown in the index row. Keep under ~90 characters. */
-  summary: string;
-  stack: string[];
   status: ProjectStatus;
-  year?: string;
-  links: {
-    github?: string;
-    live?: string;
-  };
-  images: ProjectImage[];
-  /** Long-form case file body. Each field renders as its own dossier block. */
-  overview: string;
-  problem: string;
-  implementation: string;
-  architecture: ArchitectureNode[];
-  technologies: string[];
-  learnings: string[];
-  /** Marks the starred entry (Systems Lab). Only one should be true. */
-  starred?: boolean;
-  /** Renders a bespoke case-file body instead of the standard dossier —
-   *  currently only the Systems Lab topology. */
-  dossier?: "systems-lab";
-  /** Set false while details are still placeholder text. */
-  complete: boolean;
+  statusNote: string;
+  repo: string;
+  /** Short list for the header. */
+  stack: string[];
+  /** Concept ids in content/graph.ts that this project lights up. */
+  concepts: string[];
+  problem: string[];
+  solution: string[];
+  howItWorks: Step[];
+  architecture?: Architecture;
+  evidence: Metric[];
+  verification: Verification[];
+  decisions: Decision[];
+  limitations: string[];
+  screenshots: Screenshot[];
+  /** Colour family used for this project's world. */
+  accent: "blue" | "cyan" | "violet" | "slate";
 }
 
-export interface TopologyNode {
+export interface EvidenceSnapshot {
   id: string;
+  project: ProjectSlug;
   label: string;
-  /** Short mono tag under the label inside the diagram. */
-  tag: string;
-  /** Layout row in the topology, 0 = top. */
-  row: number;
-  /** Horizontal position 0..1 within its row. */
-  x: number;
-  parent?: string;
-  kind: "edge" | "overlay" | "host" | "platform" | "service";
-  what: string;
-  configured: string[];
-  purpose: string;
-  learned: string;
-}
-
-export interface CapabilityGroup {
-  id: string;
-  title: string;
-  /** Honest qualifier: "Fundamentals", "Hands on", "Working knowledge". */
-  level: string;
-  note: string;
-  items: string[];
-}
-
-export interface ExplorationTrack {
-  id: string;
-  title: string;
-  status: "active" | "queued";
+  value: string;
   detail: string;
-  focus: string[];
+  verifiedOn: string;
+  method: string;
 }
 
-/** Future CTF writeups / lab notes / experiments / tools drop in here. */
-export type LogKind = "writeup" | "lab" | "experiment" | "tool" | "note";
-
-export interface LogEntry {
+export interface AboutBlock {
   id: string;
-  kind: LogKind;
   title: string;
-  date: string;
-  summary: string;
-  href?: string;
-  tags?: string[];
+  body: string[];
 }
 
-export interface Hackathon {
+export interface ExplorationTheme {
   id: string;
-  name: string;
-  scale: string;
-  date?: string;
-  location?: string;
-  role?: string;
+  title: string;
+  status: "active" | "planned";
   detail: string;
-  /** Only facts. No placements, awards or judging results. */
-  facts: string[];
+  threads: string[];
 }

@@ -1,25 +1,30 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, JetBrains_Mono } from "next/font/google";
-import { profile } from "@/data/profile";
+import { Archivo, Geist, Geist_Mono } from "next/font/google";
+import { profile } from "@/content/profile";
 import "./globals.css";
+
+/* Fonts are self-hosted through next/font: no runtime request to Google.
+ * All three are SIL Open Font License. Archivo carries a width axis that
+ * the display style sets to 108 for the engineered, wide-set headline. */
+const archivo = Archivo({
+  subsets: ["latin"],
+  variable: "--font-archivo",
+  display: "swap",
+  axes: ["wdth"],
+});
 
 const geist = Geist({
   subsets: ["latin"],
   variable: "--font-geist",
   display: "swap",
-  weight: ["400", "500", "600"],
 });
 
-const jetbrains = JetBrains_Mono({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  variable: "--font-mono-jb",
+  variable: "--font-geist-mono",
   display: "swap",
-  weight: ["400", "500"],
 });
 
-/* Social-card metadata must never be able to fail a production build, so a
- * malformed origin degrades to "no metadataBase" instead of throwing during
- * page-data collection. */
 function metadataBase(url: string): URL | undefined {
   try {
     return new URL(url);
@@ -36,15 +41,18 @@ export const metadata: Metadata = {
   },
   description: profile.meta.description,
   applicationName: profile.name,
-  authors: [{ name: profile.name }],
+  authors: [{ name: profile.name, url: profile.links.github }],
+  creator: profile.name,
   keywords: [
     "Sujith C",
     "cybersecurity",
-    "systems",
-    "networking",
-    "self-hosting",
-    "Debian",
-    "CSE student",
+    "post-quantum cryptography",
+    "CBOM",
+    "CryptoDrishti",
+    "SurakshaScore",
+    "Aether Health",
+    "software engineering portfolio",
+    "BMSIT",
   ],
   openGraph: {
     type: "profile",
@@ -52,6 +60,7 @@ export const metadata: Metadata = {
     description: profile.meta.description,
     siteName: profile.name,
     url: profile.meta.url,
+    locale: "en_IN",
   },
   twitter: {
     card: "summary_large_image",
@@ -59,21 +68,23 @@ export const metadata: Metadata = {
     description: profile.meta.description,
   },
   robots: { index: true, follow: true },
+  alternates: { canonical: "/" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#08090c",
+  themeColor: "#090b0f",
   colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
 };
 
-/* Runs before first paint, so the page never flashes behind the sequence.
- * Deliberately consults no storage: every real page load replays the
- * opening. Only prefers-reduced-motion skips it. */
+/* Runs before first paint. Stamps the opening state so hero elements do
+ * not flash before their choreography. Deliberately consults no storage:
+ * every real page load replays the opening. Reduced motion skips it. */
 const INTRO_GATE = `
 try {
-  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.documentElement.setAttribute('data-intro', reduced ? 'done' : 'pending');
-  if (!reduced && 'scrollRestoration' in history) history.scrollRestoration = 'manual';
+  var r = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.documentElement.setAttribute('data-intro', r ? 'done' : 'pending');
 } catch (e) {
   document.documentElement.setAttribute('data-intro', 'done');
 }
@@ -83,14 +94,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${geist.variable} ${jetbrains.variable}`}
+      className={`${archivo.variable} ${geist.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: INTRO_GATE }} />
         <noscript>
-          {/* Without JS the sequence can never hand off, so show the site. */}
-          <style>{`.intro-root{display:none!important}#site{opacity:1!important;pointer-events:auto!important}`}</style>
+          <style>{`[data-enter]{opacity:1!important;transform:none!important}`}</style>
         </noscript>
       </head>
       <body className="antialiased">{children}</body>

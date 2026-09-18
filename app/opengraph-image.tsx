@@ -1,13 +1,20 @@
 import { ImageResponse } from "next/og";
-import { profile } from "@/data/profile";
+import { profile } from "@/content/profile";
 
+export const alt = `${profile.name} — ${profile.role}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = `${profile.name} — ${profile.disciplines.join(" · ")}`;
 
-/* Static social card, generated once at build time. Kept to flat shapes and
- * system-metric text so it needs no font fetch. */
-export default function OpengraphImage() {
+/* Drawn with the same graph motif as the site: a root node with its four
+ * project nodes. System fonts only, so the route stays dependency-free. */
+export default function OpenGraphImage() {
+  const nodes = [
+    { x: 880, y: 200, c: "#3fd2f0" },
+    { x: 1040, y: 330, c: "#4f7cff" },
+    { x: 900, y: 470, c: "#8b7cf6" },
+    { x: 760, y: 340, c: "#7d8799" },
+  ];
+  const root = { x: 900, y: 330 };
   return new ImageResponse(
     (
       <div
@@ -15,64 +22,35 @@ export default function OpengraphImage() {
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          background: "#08090c",
-          padding: 72,
+          background: "#090b0f",
+          color: "#e8ecf2",
+          fontFamily: "Helvetica, Arial, sans-serif",
           position: "relative",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            inset: 40,
-            border: "1px solid #262c36",
-            display: "flex",
-          }}
-        />
-        <div style={{ position: "absolute", left: 40, top: 40, width: 28, height: 2, background: "#45d4ee", display: "flex" }} />
-        <div style={{ position: "absolute", left: 40, top: 40, width: 2, height: 28, background: "#45d4ee", display: "flex" }} />
-        <div style={{ position: "absolute", right: 40, bottom: 40, width: 28, height: 2, background: "#45d4ee", display: "flex" }} />
-        <div style={{ position: "absolute", right: 40, bottom: 40, width: 2, height: 28, background: "#45d4ee", display: "flex" }} />
-
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ width: 8, height: 8, borderRadius: 8, background: "#45d4ee", display: "flex" }} />
-          <div style={{ color: "#5b616e", fontSize: 22, letterSpacing: 6, display: "flex" }}>
-            SECURE SESSION
+        <svg width="1200" height="630" style={{ position: "absolute", inset: 0 }}>
+          {nodes.map((n, i) => (
+            <line key={i} x1={root.x} y1={root.y} x2={n.x} y2={n.y} stroke="#2a3140" strokeWidth="2" />
+          ))}
+          {nodes.map((n, i) => (
+            <circle key={`c${i}`} cx={n.x} cy={n.y} r="9" fill={n.c} />
+          ))}
+          <circle cx={root.x} cy={root.y} r="16" fill="#4f7cff" />
+          <circle cx={root.x} cy={root.y} r="30" stroke="#4f7cff" strokeOpacity="0.4" strokeWidth="2" fill="none" />
+        </svg>
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "72px 80px" }}>
+          <div style={{ fontSize: 22, letterSpacing: 6, color: "#7d8799", textTransform: "uppercase" }}>
+            The Living System
           </div>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div
-            style={{
-              color: "#e9ebef",
-              fontSize: 132,
-              letterSpacing: -4,
-              lineHeight: 1,
-              display: "flex",
-            }}
-          >
+          <div style={{ fontSize: 118, fontWeight: 600, letterSpacing: -4, marginTop: 12, lineHeight: 1 }}>
             {profile.displayName}
           </div>
-          <div
-            style={{
-              marginTop: 34,
-              color: "#939aa6",
-              fontSize: 26,
-              letterSpacing: 5,
-              display: "flex",
-            }}
-          >
-            {profile.disciplines.join("   •   ")}
+          <div style={{ fontSize: 30, color: "#a3adbf", marginTop: 26, maxWidth: 760 }}>
+            {`${profile.role}. ${profile.statement}`}
           </div>
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "space-between", color: "#5b616e", fontSize: 20, letterSpacing: 3 }}>
-          <div style={{ display: "flex" }}>CSE STUDENT · {profile.location.toUpperCase()}</div>
-          <div style={{ display: "flex", color: "#45d4ee" }}>ACCESS GRANTED</div>
         </div>
       </div>
     ),
-    size,
+    { ...size },
   );
 }
