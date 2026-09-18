@@ -38,18 +38,11 @@ export function Hero() {
   const y = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : 120]);
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, reduced ? 1 : 0]);
 
+  /* The gate script in app/layout.tsx releases the CSS choreography on its
+   * own timer; this effect only has to start the canvas. */
   useEffect(() => {
-    const root = document.documentElement;
-    if (root.getAttribute("data-intro") !== "pending") {
-      ignite();
-      return;
-    }
-    const t1 = window.setTimeout(ignite, 200);
-    const t2 = window.setTimeout(() => root.setAttribute("data-intro", "done"), 260);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    const t = window.setTimeout(ignite, 200);
+    return () => clearTimeout(t);
   }, [ignite]);
 
   const delay = (ms: number) => ({ "--enter-delay": `${ms}ms` }) as React.CSSProperties;

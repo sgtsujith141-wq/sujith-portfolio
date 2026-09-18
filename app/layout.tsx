@@ -79,12 +79,16 @@ export const viewport: Viewport = {
 };
 
 /* Runs before first paint. Stamps the opening state so hero elements do
- * not flash before their choreography. Deliberately consults no storage:
- * every real page load replays the opening. Reduced motion skips it. */
+ * not flash before their choreography, then releases it on its own timer
+ * so the entrance starts even before React has hydrated on a slow device.
+ * Deliberately consults no storage: every real page load replays the
+ * opening. Reduced motion skips it entirely. */
 const INTRO_GATE = `
 try {
   var r = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.documentElement.setAttribute('data-intro', r ? 'done' : 'pending');
+  var d = document.documentElement;
+  d.setAttribute('data-intro', r ? 'done' : 'pending');
+  if (!r) setTimeout(function () { d.setAttribute('data-intro', 'done'); }, 260);
 } catch (e) {
   document.documentElement.setAttribute('data-intro', 'done');
 }

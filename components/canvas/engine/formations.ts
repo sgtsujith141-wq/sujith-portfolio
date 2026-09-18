@@ -353,7 +353,7 @@ function exploration(v: Viewport, p: number): { t: Record<string, Target>; cam: 
   groups.forEach(([c, fx, fy], gi) => {
     const drift = Math.sin(p * Math.PI * 2 + gi) * v.w * 0.02;
     ring(t, byCluster(c), v.w * fx + drift, v.h * fy, R, 0.5, 0, 0.15, gi * 1.3, 0.8);
-    if (c !== "core") t[c] = { ...t[c]!, la: v.narrow ? 0 : 0.45, a: 0.7 };
+    if (c !== "core") t[c] = { ...t[c]!, la: 0, a: 0.7 };
   });
   return { t, cam: { zoom: 1, x: 0, y: 0 } };
 }
