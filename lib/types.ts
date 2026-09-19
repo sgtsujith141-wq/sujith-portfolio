@@ -7,12 +7,14 @@
  *  Engineering Evidence section can print its source and date.
  * ══════════════════════════════════════════════════════════════════════ */
 
+/** Home-page sections. Work now lives on its own route. */
 export type SectionId =
   | "introduction"
-  | "work"
-  | "evidence"
   | "about"
-  | "exploration"
+  | "network"
+  | "homelab"
+  | "exploring"
+  | "work"
   | "connect";
 
 export interface NavSection {
@@ -25,6 +27,7 @@ export interface NavSection {
 }
 
 export type ProjectSlug =
+  | "home-lab"
   | "cryptodrishti"
   | "surakshascore"
   | "surakshascore-mvp"
@@ -89,7 +92,7 @@ export interface Architecture {
   edges: ArchEdge[];
 }
 
-export type ProjectStatus = "active" | "prototype" | "archived";
+export type ProjectStatus = "active" | "running" | "prototype" | "archived";
 
 export interface Project {
   slug: ProjectSlug;
@@ -99,7 +102,8 @@ export interface Project {
   category: string;
   status: ProjectStatus;
   statusNote: string;
-  repo: string;
+  /** Absent for work that has no public repository, such as the home lab. */
+  repo?: string;
   /** Short list for the header. */
   stack: string[];
   /** Concept ids in content/graph.ts that this project lights up. */
@@ -114,7 +118,71 @@ export interface Project {
   limitations: string[];
   screenshots: Screenshot[];
   /** Colour family used for this project's world. */
-  accent: "blue" | "cyan" | "violet" | "slate";
+  accent: "blue" | "cyan" | "violet" | "slate" | "green";
+  /** Optional custom visual rendered in the case study, by key. */
+  visual?: "crypto" | "signals" | "evolution" | "aether" | "topology";
+}
+
+/* ── Personal identity ─────────────────────────────────────────────── */
+
+/** One domain in the personal network: a thing Sujith actually explores. */
+export interface Domain {
+  id: DomainId;
+  label: string;
+  /** One line, shown on the node when focused. */
+  summary: string;
+  /** What this means to him, in his own register. */
+  body: string;
+  /** Concrete, verifiable places this shows up. */
+  evidence: string[];
+  /** Project slugs this domain genuinely connects to. */
+  projects: ProjectSlug[];
+  /** Home-lab service ids this domain genuinely connects to. */
+  services: string[];
+  accent: "blue" | "cyan" | "violet" | "green" | "slate";
+}
+
+export type DomainId =
+  | "networking"
+  | "cybersecurity"
+  | "systems"
+  | "linux"
+  | "infrastructure"
+  | "ai"
+  | "software";
+
+/** A skill with an honest level. No percentages, no bars. */
+export interface SkillGroup {
+  id: string;
+  title: string;
+  level: string;
+  note: string;
+  items: string[];
+}
+
+/* ── Home lab ──────────────────────────────────────────────────────── */
+
+export type ServiceKind = "edge" | "overlay" | "host" | "platform" | "service";
+
+export interface LabService {
+  id: string;
+  label: string;
+  tag: string;
+  kind: ServiceKind;
+  /** Layer index, 0 at the top of the topology. */
+  layer: number;
+  /** Horizontal position inside the layer, 0–1. */
+  x: number;
+  /** Parent id; edges are derived from this. */
+  parent?: string;
+  what: string;
+  purpose: string;
+  /** What he actually did, in his own words. */
+  configured: string[];
+  /** What running it taught him. */
+  learned: string;
+  /** Domains this service demonstrates. */
+  domains: DomainId[];
 }
 
 export interface EvidenceSnapshot {

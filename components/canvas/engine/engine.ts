@@ -1,11 +1,13 @@
-import { graphNodes, graphEdges, graphNodeById, type GraphKind } from "@/content/graph";
-import type { ProjectSlug, SectionId } from "@/lib/types";
+import { graphNodes, graphEdges, type GraphKind } from "@/content/graph";
+import type { DomainId, ProjectSlug } from "@/lib/types";
 import { lerp, seeded } from "@/lib/utils";
 import {
   ambientTargets,
   formation,
+  maxDepth,
   nodeDepth,
   type Camera,
+  type FormationName,
   type Stage,
   type Target,
   type Viewport,
@@ -14,16 +16,26 @@ import {
 /* ══════════════════════════════════════════════════════════════════════
  *  LIVING SYSTEM ENGINE
  *
- *  One canvas for the whole page. Imperative on purpose: React pushes
- *  state in through the setters; nothing re-renders per frame.
+ *  One canvas for the whole site. Imperative on purpose: React pushes
+ *  state in through the setters and nothing re-renders per frame.
  *
- *  Cost control
- *   · DPR capped at 2 (1.5 on coarse pointers)
- *   · ambient count scales with viewport area and halves on touch
- *   · ambient links use squared distance with an early-out
- *   · rAF stops when the tab is hidden or the canvas is off-screen
- *   · reduced motion draws one frame per state change, no loop
- *   · labels are drawn only for nodes whose label alpha > 0.04
+ *  What it draws, back to front:
+ *    1. a light field — two soft radial lights, one following the
+ *       pointer, one drifting on its own, tinted by the section
+ *    2. an ambient lattice at far depth, linked by proximity
+ *    3. graph edges, straight or orthogonally routed per formation
+ *    4. signals flowing along edges, each with a fading trail
+ *    5. nodes, sized and hazed by depth, with rings when lit
+ *    6. pulses — occasional wavefronts that travel outward from the
+ *       root through the graph, lighting each ring as they pass
+ *
+ *  Depth is real: every node carries a z (0.15 far – 1 near) that scales
+ *  its parallax offset, its radius and how much it fades into the haze.
+ *
+ *  Cost control: DPR capped at 2 (1.5 coarse); ambient count from
+ *  viewport area, halved on touch and again on a low-power device;
+ *  squared-distance early-out on lattice links; the loop stops when the
+ *  tab is hidden; reduced motion draws one static frame per state change.
  * ══════════════════════════════════════════════════════════════════════ */
 
 interface SimNode {
@@ -43,10 +55,12 @@ interface SimNode {
   tla: number;
   lit: number;
   tlit: number;
+  z: number;
+  tz: number;
   /** Pointer energy, eased. */
   e: number;
-  /** Parallax depth 0.25–1. */
-  z: number;
+  /** Pulse energy, decays on its own. */
+  pulse: number;
   phase: number;
   label: string;
 }
@@ -64,40 +78,61 @@ interface Ambient {
   phase: number;
 }
 
-interface Packet {
-  from: number;
-  to: number;
+interface Signal {
+  edge: number;
+  /** 0–1 along the edge; direction is baked into from/to. */
   t: number;
   speed: number;
+  reverse: boolean;
+  hue: number;
 }
 
-const COLOR = {
-  ink: "232,236,242",
-  muted: "163,173,191",
-  faint: "125,135,153",
-  accent: "79,124,255",
-  signal: "63,210,240",
-  violet: "139,124,246",
-};
+interface Pulse {
+  /** Wavefront position in BFS depth units. */
+  front: number;
+  life: number;
+}
 
-function kindColor(kind: GraphKind) {
+const RGB = {
+  ink: [232, 236, 242],
+  muted: [163, 173, 191],
+  faint: [125, 135, 153],
+  accent: [79, 124, 255],
+  signal: [63, 210, 240],
+  violet: [139, 124, 246],
+  teal: [64, 196, 190],
+} as const;
+
+type Rgb = readonly [number, number, number] | number[];
+const rgba = (c: Rgb, a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+const mix = (a: Rgb, b: Rgb, t: number): number[] => [
+  Math.round(lerp(a[0]!, b[0]!, t)),
+  Math.round(lerp(a[1]!, b[1]!, t)),
+  Math.round(lerp(a[2]!, b[2]!, t)),
+];
+
+function kindColor(kind: GraphKind): Rgb {
   switch (kind) {
     case "root":
-      return COLOR.ink;
+      return RGB.ink;
+    case "domain":
+      return RGB.signal;
     case "project":
-      return COLOR.accent;
-    case "concept":
-      return COLOR.signal;
+      return RGB.accent;
+    case "service":
+      return RGB.teal;
     case "evidence":
-      return COLOR.violet;
+      return RGB.violet;
     default:
-      return COLOR.muted;
+      return RGB.muted;
   }
 }
 
 export interface EngineOptions {
   reduced: boolean;
   coarse: boolean;
+  /** Few cores or little memory: halve the field again and drop the lights. */
+  lowPower: boolean;
 }
 
 export class LivingSystemEngine {
@@ -114,22 +149,32 @@ export class LivingSystemEngine {
   private index = new Map<string, number>();
   private edges: Array<[number, number]> = [];
   private ambient: Ambient[] = [];
-  private packets: Packet[] = [];
+  private signals: Signal[] = [];
+  private pulses: Pulse[] = [];
 
-  private cam: Camera = { zoom: 1, x: 0, y: 0 };
-  private camTarget: Camera = { zoom: 1, x: 0, y: 0 };
+  private cam: Camera = { zoom: 1, x: 0, y: 0, tilt: 0 };
+  private camTarget: Camera = { zoom: 1, x: 0, y: 0, tilt: 0 };
 
-  private section: SectionId = "introduction";
+  private section: FormationName = "introduction";
   private progress = 0;
+  private phase = 1;
   private focus: ProjectSlug | null = null;
+  private domain: DomainId | null = null;
   private hover: string | null = null;
   private stage: Stage | null = null;
-  private phase = 1;
+
+  private mood = 0.15;
+  private moodTarget = 0.15;
+  private flow = 0.5;
+  private flowTarget = 0.5;
+  private routed = 0;
+  private routedTarget = 0;
 
   private pointer = { x: 0, y: 0, on: false };
   private pointerEase = { x: 0, y: 0 };
+  /** Light position in pixels, eased — trails the pointer. */
+  private light = { x: 0, y: 0 };
 
-  /** Opening: 0 = dark, 1 = fully emerged. Eases after ignite(). */
   private ignition = 0;
   private ignited = false;
   private ignitionStart = 0;
@@ -139,7 +184,8 @@ export class LivingSystemEngine {
   private visible = true;
   private last = 0;
   private time = 0;
-  private dirty = true;
+  private nextPulse = 900;
+  private signalAccum = 0;
 
   constructor(canvas: HTMLCanvasElement, opts: EngineOptions) {
     this.canvas = canvas;
@@ -151,8 +197,6 @@ export class LivingSystemEngine {
     this.build();
     this.resize();
     if (opts.reduced) {
-      // Reduced motion: the field exists, fully emerged, and only moves
-      // when a section changes — and then it snaps.
       this.ignition = 1;
       this.ignited = true;
       this.snap();
@@ -170,15 +214,26 @@ export class LivingSystemEngine {
     this.ignitionStart = performance.now();
   }
 
-  setSection(section: SectionId, progress: number) {
-    const changed = section !== this.section;
-    this.section = section;
+  setSection(name: FormationName, progress: number) {
+    const changed = name !== this.section;
+    this.section = name;
     this.progress = progress;
     this.retarget();
-    if (changed && this.opts.reduced) {
-      this.snap();
-      this.draw();
+    if (changed) {
+      // A section change is a large-scale event: send a wave through it.
+      if (!this.opts.reduced) this.pulses.push({ front: -0.4, life: 1 });
+      if (this.opts.reduced) {
+        this.snap();
+        this.draw();
+      }
     }
+  }
+
+  setPhase(value: number) {
+    const next = Math.max(0, Math.min(1, value));
+    if (Math.abs(next - this.phase) < 0.004) return;
+    this.phase = next;
+    if (this.section === "work") this.retarget();
   }
 
   setFocus(slug: ProjectSlug | null) {
@@ -191,20 +246,22 @@ export class LivingSystemEngine {
     }
   }
 
+  /** The signature section's selected domain. */
+  setDomain(id: DomainId | null) {
+    if (id === this.domain) return;
+    this.domain = id;
+    this.retarget();
+    if (!this.opts.reduced && id) this.pulses.push({ front: 0, life: 1 });
+    if (this.opts.reduced) {
+      this.snap();
+      this.draw();
+    }
+  }
+
   setHover(id: string | null) {
     this.hover = id;
-    this.dirty = true;
   }
 
-  /** Progress of the pinned Selected Work introduction. */
-  setPhase(value: number) {
-    const next = Math.max(0, Math.min(1, value));
-    if (Math.abs(next - this.phase) < 0.004) return;
-    this.phase = next;
-    if (this.section === "work" && !this.focus) this.retarget();
-  }
-
-  /** Viewport rectangle the focused cluster should occupy; null releases it. */
   setStage(stage: Stage | null) {
     const same =
       (stage === null && this.stage === null) ||
@@ -242,6 +299,9 @@ export class LivingSystemEngine {
     this.dpr = Math.min(window.devicePixelRatio || 1, this.opts.coarse ? 1.5 : 2);
     this.canvas.width = Math.round(this.w * this.dpr);
     this.canvas.height = Math.round(this.h * this.dpr);
+    if (!this.light.x) {
+      this.light = { x: this.w * 0.5, y: this.h * 0.4 };
+    }
 
     const want = this.ambientCount();
     if (this.ambient.length !== want) this.buildAmbient(want);
@@ -276,9 +336,11 @@ export class LivingSystemEngine {
       tla: 0,
       lit: 0,
       tlit: 0,
+      z: 0.5,
+      tz: 0.5,
       e: 0,
-      z: 0.35 + seeded(i * 3 + 1) * 0.65,
-      phase: seeded(i * 5 + 2) * Math.PI * 2,
+      pulse: 0,
+      phase: seeded(i * 5.3 + 2) * Math.PI * 2,
       label: n.label,
     }));
     this.index = new Map(this.nodes.map((n, i) => [n.id, i]));
@@ -292,8 +354,10 @@ export class LivingSystemEngine {
 
   private ambientCount() {
     const area = this.w * this.h;
-    const n = Math.round(Math.min(90, Math.max(24, area / 26000)));
-    return this.opts.coarse ? Math.round(n * 0.5) : n;
+    let n = Math.round(Math.min(96, Math.max(26, area / 24000)));
+    if (this.opts.coarse) n = Math.round(n * 0.5);
+    if (this.opts.lowPower) n = Math.round(n * 0.6);
+    return n;
   }
 
   private buildAmbient(n: number) {
@@ -306,8 +370,8 @@ export class LivingSystemEngine {
       ty: this.h / 2,
       a: 0,
       ta: 0,
-      z: 0.2 + seeded(i * 11 + 4) * 0.5,
-      phase: seeded(i * 13 + 6) * Math.PI * 2,
+      z: 0.12 + seeded(i * 11.9 + 4) * 0.42,
+      phase: seeded(i * 13.1 + 6) * Math.PI * 2,
     }));
   }
 
@@ -316,26 +380,30 @@ export class LivingSystemEngine {
   }
 
   private retarget() {
-    const { t, cam } = formation(this.viewport(), {
-      section: this.section,
+    const { t, cam, mood, flow, routed } = formation(this.viewport(), {
+      name: this.section,
       progress: this.progress,
+      phase: this.phase,
       focus: this.focus,
+      domain: this.domain,
       hover: this.hover,
       stage: this.stage,
-      phase: this.phase,
     });
-    // Labelled nodes never run under the navigation rail or off the edges.
-    const minX = 20;
-    const maxX = this.narrow ? this.w - 20 : this.w - 230;
+
+    // Labelled nodes never run under the rail or off the edges.
+    const minX = 22;
+    const maxX = this.narrow ? this.w - 22 : this.w - 232;
     for (const n of this.nodes) {
       const target: Target | undefined = t[n.id];
       if (!target) continue;
       n.tx = target.la > 0.05 ? Math.min(maxX, Math.max(minX, target.x)) : target.x;
-      n.ty = Math.min(this.h - 12, Math.max(12, target.y));
+      n.ty = Math.min(this.h - 14, Math.max(14, target.y));
       n.ta = target.a;
       n.tla = target.la;
       n.tlit = target.lit;
+      n.tz = target.z;
     }
+
     const amb = ambientTargets(this.viewport(), this.ambient.length, this.section, this.progress);
     this.ambient.forEach((a, i) => {
       const target = amb[i];
@@ -343,9 +411,13 @@ export class LivingSystemEngine {
       a.tx = target.x;
       a.ty = target.y;
       a.ta = target.a;
+      a.z = target.z;
     });
+
     this.camTarget = cam;
-    this.dirty = true;
+    this.moodTarget = mood;
+    this.flowTarget = this.opts.lowPower ? flow * 0.4 : flow;
+    this.routedTarget = routed;
   }
 
   private snap() {
@@ -356,6 +428,7 @@ export class LivingSystemEngine {
       n.a = n.ta;
       n.la = n.tla;
       n.lit = n.tlit;
+      n.z = n.tz;
     }
     for (const a of this.ambient) {
       a.x = a.tx;
@@ -364,6 +437,10 @@ export class LivingSystemEngine {
       a.a = a.ta;
     }
     this.cam = { ...this.camTarget };
+    this.mood = this.moodTarget;
+    this.routed = this.routedTarget;
+    this.signals = [];
+    this.pulses = [];
   }
 
   /* ── loop ──────────────────────────────────────────────────────── */
@@ -390,39 +467,46 @@ export class LivingSystemEngine {
   };
 
   private step(dt: number, now: number) {
-    // Ignition: 0 → 1 over 1.9s after ignite(). Before it, the field is dark.
     if (this.ignited && this.ignition < 1) {
-      const t = Math.min(1, (now - this.ignitionStart) / 1900);
+      const t = Math.min(1, (now - this.ignitionStart) / 2000);
       this.ignition = 1 - Math.pow(1 - t, 3);
+      if (this.ignition > 0.55 && !this.pulses.length) this.pulses.push({ front: -0.2, life: 1 });
     }
 
     const k = Math.min(1, 0.05 * dt);
     this.cam.zoom = lerp(this.cam.zoom, this.camTarget.zoom, k);
     this.cam.x = lerp(this.cam.x, this.camTarget.x, k);
     this.cam.y = lerp(this.cam.y, this.camTarget.y, k);
+    this.cam.tilt = lerp(this.cam.tilt, this.camTarget.tilt, k);
+    this.mood = lerp(this.mood, this.moodTarget, k * 0.8);
+    this.flow = lerp(this.flow, this.flowTarget, k);
+    this.routed = lerp(this.routed, this.routedTarget, k * 0.7);
 
-    const pe = Math.min(1, 0.08 * dt);
-    const px = this.pointer.on ? (this.pointer.x / this.w - 0.5) : 0;
-    const py = this.pointer.on ? (this.pointer.y / this.h - 0.5) : 0;
+    // Pointer parallax, and a light that trails behind the cursor.
+    const pe = Math.min(1, 0.075 * dt);
+    const px = this.pointer.on ? this.pointer.x / this.w - 0.5 : 0;
+    const py = this.pointer.on ? this.pointer.y / this.h - 0.5 : 0;
     this.pointerEase.x = lerp(this.pointerEase.x, px, pe);
     this.pointerEase.y = lerp(this.pointerEase.y, py, pe);
+    const lx = this.pointer.on ? this.pointer.x : this.w * 0.5;
+    const ly = this.pointer.on ? this.pointer.y : this.h * 0.42;
+    this.light.x = lerp(this.light.x, lx, Math.min(1, 0.045 * dt));
+    this.light.y = lerp(this.light.y, ly, Math.min(1, 0.045 * dt));
 
-    const stiff = 0.028;
-    const damp = Math.pow(0.84, dt);
+    const stiff = 0.03;
+    const damp = Math.pow(0.845, dt);
     const drift = Math.min(this.w, this.h) * 0.006;
-    const cursorR = 170;
+    const cursorR = 190;
 
     for (const n of this.nodes) {
-      // Staged emergence: deeper nodes appear later.
-      const gate = Math.max(0, Math.min(1, (this.ignition - n.depth * 0.18) / 0.4));
-      const cx = this.w / 2;
-      const cy = this.h / 2;
-      const gx = lerp(cx, n.tx, gate);
-      const gy = lerp(cy, n.ty, gate);
+      // Staged emergence: rings of the graph light up in turn.
+      const gate = Math.max(0, Math.min(1, (this.ignition - n.depth * 0.16) / 0.42));
+      const gx = lerp(this.w / 2, n.tx, gate);
+      const gy = lerp(this.h / 2, n.ty, gate);
 
-      const wob = this.time * 0.007 + n.phase;
+      const wob = this.time * 0.0075 + n.phase;
       const dx = gx + Math.cos(wob) * drift - n.x;
-      const dy = gy + Math.sin(wob * 0.8) * drift - n.y;
+      const dy = gy + Math.sin(wob * 0.82) * drift - n.y;
       n.vx = (n.vx + dx * stiff * dt) * damp;
       n.vy = (n.vy + dy * stiff * dt) * damp;
       n.x += n.vx * dt;
@@ -433,55 +517,112 @@ export class LivingSystemEngine {
         const ddx = n.x - this.pointer.x;
         const ddy = n.y - this.pointer.y;
         const d = Math.hypot(ddx, ddy);
-        if (d < cursorR) energy = 1 - d / cursorR;
+        if (d < cursorR) energy = (1 - d / cursorR) * n.z;
       }
       if (this.hover === n.id) energy = 1;
       n.e += (energy - n.e) * Math.min(1, 0.12 * dt);
+      n.pulse *= Math.pow(0.955, dt);
 
-      const ease = Math.min(1, 0.06 * dt);
+      const ease = Math.min(1, 0.062 * dt);
       n.a += (n.ta * gate - n.a) * ease;
       n.la += (n.tla * gate - n.la) * ease;
       n.lit += (n.tlit - n.lit) * ease;
+      n.z += (n.tz - n.z) * ease;
     }
 
-    const aGate = Math.max(0, Math.min(1, (this.ignition - 0.45) / 0.55));
+    const aGate = Math.max(0, Math.min(1, (this.ignition - 0.4) / 0.6));
     for (const a of this.ambient) {
-      const wob = this.time * 0.005 + a.phase;
+      const wob = this.time * 0.0052 + a.phase;
       const gx = lerp(this.w / 2, a.tx, aGate);
       const gy = lerp(this.h / 2, a.ty, aGate);
-      const dx = gx + Math.cos(wob) * drift * 2 - a.x;
-      const dy = gy + Math.sin(wob * 0.9) * drift * 2 - a.y;
-      a.vx = (a.vx + dx * 0.02 * dt) * damp;
-      a.vy = (a.vy + dy * 0.02 * dt) * damp;
+      const dx = gx + Math.cos(wob) * drift * 2.2 - a.x;
+      const dy = gy + Math.sin(wob * 0.9) * drift * 2.2 - a.y;
+      a.vx = (a.vx + dx * 0.021 * dt) * damp;
+      a.vy = (a.vy + dy * 0.021 * dt) * damp;
       a.x += a.vx * dt;
       a.y += a.vy * dt;
       a.a += (a.ta * aGate - a.a) * Math.min(1, 0.05 * dt);
     }
 
-    // Signals: short-lived dots travelling along lit edges. Decorative.
-    for (let i = this.packets.length - 1; i >= 0; i--) {
-      const p = this.packets[i]!;
-      p.t += p.speed * dt;
-      if (p.t >= 1) this.packets.splice(i, 1);
-    }
-    if (this.ignition > 0.9 && this.packets.length < 5 && Math.random() < 0.02 * dt) {
-      this.spawnPacket();
-    }
+    this.stepSignals(dt);
+    this.stepPulses(dt);
   }
 
-  private spawnPacket() {
-    const lit = this.edges.filter(([a, b]) => {
-      const na = this.nodes[a]!;
-      const nb = this.nodes[b]!;
-      return Math.min(na.a, nb.a) > 0.3;
+  /** Signals flow continuously along whichever edges are currently lit. */
+  private stepSignals(dt: number) {
+    for (let i = this.signals.length - 1; i >= 0; i--) {
+      const s = this.signals[i]!;
+      s.t += s.speed * dt;
+      if (s.t >= 1) this.signals.splice(i, 1);
+    }
+    if (this.ignition < 0.85) return;
+
+    const cap = this.opts.lowPower ? 6 : this.opts.coarse ? 8 : 16;
+    this.signalAccum += this.flow * dt * 0.018;
+    while (this.signalAccum >= 1 && this.signals.length < cap) {
+      this.signalAccum -= 1;
+      this.spawnSignal();
+    }
+    if (this.signalAccum > 3) this.signalAccum = 3;
+  }
+
+  private spawnSignal() {
+    // Pick among edges whose ends are actually visible, so signals always
+    // travel along something the visitor can see.
+    let best = -1;
+    let bestScore = 0;
+    for (let k = 0; k < 10; k++) {
+      const i = (Math.random() * this.edges.length) | 0;
+      const e = this.edges[i];
+      if (!e) continue;
+      const a = this.nodes[e[0]]!;
+      const b = this.nodes[e[1]]!;
+      const score = Math.min(a.a, b.a) * (0.4 + Math.max(a.lit, b.lit));
+      if (score > bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    if (best < 0 || bestScore < 0.12) return;
+    this.signals.push({
+      edge: best,
+      t: 0,
+      speed: 0.009 + Math.random() * 0.008,
+      reverse: Math.random() < 0.45,
+      hue: Math.random(),
     });
-    if (!lit.length) return;
-    const [from, to] = lit[(Math.random() * lit.length) | 0]!;
-    const flip = Math.random() < 0.5;
-    this.packets.push({ from: flip ? to : from, to: flip ? from : to, t: 0, speed: 0.008 + Math.random() * 0.006 });
   }
 
-  /* ── render ─────────────────────────────────────────────────────── */
+  /** A pulse is a wavefront in BFS-depth space travelling out from Sujith. */
+  private stepPulses(dt: number) {
+    this.nextPulse -= dt;
+    if (this.nextPulse <= 0 && this.ignition > 0.9) {
+      this.nextPulse = 780 + Math.random() * 640;
+      this.pulses.push({ front: -0.3, life: 1 });
+    }
+    if (!this.pulses.length) return;
+
+    for (let i = this.pulses.length - 1; i >= 0; i--) {
+      const p = this.pulses[i]!;
+      p.front += dt * 0.022;
+      if (p.front > maxDepth + 1.2) {
+        this.pulses.splice(i, 1);
+        continue;
+      }
+      for (const n of this.nodes) {
+        if (n.a < 0.05) continue;
+        const d = Math.abs(n.depth - p.front);
+        if (d < 0.55) n.pulse = Math.max(n.pulse, (1 - d / 0.55) * p.life);
+      }
+    }
+  }
+
+  /* ── render ────────────────────────────────────────────────────── */
+
+  /** The section palette: cool blue at rest, cyan when the field is busy. */
+  private tint(): number[] {
+    return mix(RGB.accent, RGB.signal, Math.min(1, this.mood));
+  }
 
   private draw() {
     const ctx = this.ctx;
@@ -489,20 +630,38 @@ export class LivingSystemEngine {
     const px = this.pointerEase.x;
     const py = this.pointerEase.y;
 
-    ctx.setTransform(
-      this.dpr * z,
-      0,
-      0,
-      this.dpr * z,
-      (-(z - 1) * this.w * 0.5 + this.cam.x - px * 10) * this.dpr,
-      (-(z - 1) * this.h * 0.5 + this.cam.y - py * 10) * this.dpr,
-    );
+    // Kept so labels can be culled in screen space further down.
+    const ox = -(z - 1) * this.w * 0.5 + this.cam.x - px * 12;
+    const oy = -(z - 1) * this.h * 0.5 + this.cam.y - py * 12;
+    ctx.setTransform(this.dpr * z, 0, 0, this.dpr * z, ox * this.dpr, oy * this.dpr);
     ctx.clearRect(-this.w, -this.h, this.w * 3, this.h * 3);
 
-    const par = (depth: number) => ({ dx: -px * depth * 22, dy: -py * depth * 22 });
+    const tint = this.tint();
+    const par = (depth: number) => ({ dx: -px * depth * 34, dy: -py * depth * 34 });
 
-    /* Ambient lattice links. */
-    const linkDist = Math.min(this.w, this.h) * (this.section === "evidence" ? 0.14 : 0.11);
+    /* 1 — light field. Two soft lights: one trailing the pointer, one
+     * drifting on its own. Skipped entirely on low-power devices. */
+    if (!this.opts.lowPower && this.ignition > 0.1) {
+      const strength = 0.06 + this.mood * 0.05;
+      const r1 = Math.max(this.w, this.h) * 0.42;
+      const g1 = ctx.createRadialGradient(this.light.x, this.light.y, 0, this.light.x, this.light.y, r1);
+      g1.addColorStop(0, rgba(tint, strength * this.ignition));
+      g1.addColorStop(1, rgba(tint, 0));
+      ctx.fillStyle = g1;
+      ctx.fillRect(0, 0, this.w, this.h);
+
+      const dx = this.w * (0.5 + Math.cos(this.time * 0.0016) * 0.36);
+      const dy = this.h * (0.5 + Math.sin(this.time * 0.0012) * 0.34);
+      const r2 = Math.max(this.w, this.h) * 0.34;
+      const g2 = ctx.createRadialGradient(dx, dy, 0, dx, dy, r2);
+      g2.addColorStop(0, rgba(RGB.violet, 0.035 * this.ignition));
+      g2.addColorStop(1, rgba(RGB.violet, 0));
+      ctx.fillStyle = g2;
+      ctx.fillRect(0, 0, this.w, this.h);
+    }
+
+    /* 2 — ambient lattice. */
+    const linkDist = Math.min(this.w, this.h) * (this.routed > 0.5 ? 0.13 : 0.105);
     const linkDist2 = linkDist * linkDist;
     ctx.lineWidth = 1;
     for (let i = 0; i < this.ambient.length; i++) {
@@ -512,135 +671,168 @@ export class LivingSystemEngine {
       for (let j = i + 1; j < this.ambient.length; j++) {
         const b = this.ambient[j]!;
         if (b.a < 0.03) continue;
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
-        const d2 = dx * dx + dy * dy;
+        const ddx = a.x - b.x;
+        const ddy = a.y - b.y;
+        const d2 = ddx * ddx + ddy * ddy;
         if (d2 > linkDist2) continue;
         const falloff = 1 - Math.sqrt(d2) / linkDist;
-        const alpha = 0.07 * falloff * Math.min(a.a, b.a);
+        const depth = (a.z + b.z) * 0.5;
+        const alpha = 0.075 * falloff * Math.min(a.a, b.a) * (0.5 + depth);
         if (alpha < 0.004) continue;
         const pb = par(b.z);
-        ctx.strokeStyle = `rgba(${COLOR.muted},${alpha})`;
+        ctx.strokeStyle = rgba(RGB.muted, alpha);
         ctx.beginPath();
         ctx.moveTo(a.x + pa.dx, a.y + pa.dy);
         ctx.lineTo(b.x + pb.dx, b.y + pb.dy);
         ctx.stroke();
       }
     }
-
-    /* Ambient nodes. */
     for (const a of this.ambient) {
       if (a.a < 0.02) continue;
       const p = par(a.z);
-      ctx.fillStyle = `rgba(${COLOR.muted},${a.a * 0.55})`;
+      ctx.fillStyle = rgba(RGB.muted, a.a * 0.5 * (0.35 + a.z));
       ctx.beginPath();
-      ctx.arc(a.x + p.dx, a.y + p.dy, 1.1, 0, Math.PI * 2);
+      ctx.arc(a.x + p.dx, a.y + p.dy, 0.7 + a.z * 1.1, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    /* Graph edges. */
-    const ortho = this.section === "evidence";
+    /* 3 — graph edges. `routed` morphs them into orthogonal pathways,
+     * which is what turns the field into an infrastructure topology. */
+    const routed = this.routed;
     for (const [ai, bi] of this.edges) {
       const a = this.nodes[ai]!;
       const b = this.nodes[bi]!;
       const base = Math.min(a.a, b.a);
       if (base < 0.03) continue;
-      const heat = Math.max(a.lit, b.lit, a.e, b.e);
-      const alpha = base * (0.1 + heat * 0.32);
+      const heat = Math.max(a.lit, b.lit, a.e, b.e, a.pulse, b.pulse);
+      const depth = (a.z + b.z) * 0.5;
+      const alpha = base * (0.08 + heat * 0.34) * (0.45 + depth * 0.55);
+      if (alpha < 0.004) continue;
       const pa = par(a.z);
       const pb = par(b.z);
-      ctx.strokeStyle = heat > 0.2 ? `rgba(${COLOR.signal},${alpha})` : `rgba(${COLOR.muted},${alpha})`;
-      ctx.beginPath();
       const ax = a.x + pa.dx;
       const ay = a.y + pa.dy;
       const bx = b.x + pb.dx;
       const by = b.y + pb.dy;
-      if (ortho) {
-        ctx.moveTo(ax, ay);
-        ctx.lineTo(bx, ay);
-        ctx.lineTo(bx, by);
-      } else {
-        ctx.moveTo(ax, ay);
-        ctx.lineTo(bx, by);
+      ctx.strokeStyle = heat > 0.2 ? rgba(tint, alpha) : rgba(RGB.muted, alpha);
+      ctx.lineWidth = heat > 0.55 ? 1.4 : 1;
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      if (routed > 0.02) {
+        // Blend between a straight line and an elbow so the change reads
+        // as the network re-routing itself rather than snapping.
+        const midY = ay + (by - ay) * 0.5;
+        const ex = lerp(bx, ax, 1 - routed);
+        ctx.lineTo(lerp(bx, ex, routed), lerp(by, midY, routed));
+        ctx.lineTo(lerp(bx, bx, routed), lerp(by, midY, routed));
       }
+      ctx.lineTo(bx, by);
       ctx.stroke();
     }
 
-    /* Packets. */
-    for (const p of this.packets) {
-      const a = this.nodes[p.from]!;
-      const b = this.nodes[p.to]!;
-      const fade = Math.sin(p.t * Math.PI) * Math.min(a.a, b.a);
-      if (fade < 0.02) continue;
+    /* 4 — signals, each with a short fading trail. */
+    for (const s of this.signals) {
+      const e = this.edges[s.edge];
+      if (!e) continue;
+      const a = this.nodes[s.reverse ? e[1] : e[0]]!;
+      const b = this.nodes[s.reverse ? e[0] : e[1]]!;
+      const vis = Math.min(a.a, b.a);
+      if (vis < 0.04) continue;
       const pa = par(a.z);
       const pb = par(b.z);
-      ctx.fillStyle = `rgba(${COLOR.signal},${0.9 * fade})`;
-      ctx.beginPath();
-      ctx.arc(
-        lerp(a.x + pa.dx, b.x + pb.dx, p.t),
-        lerp(a.y + pa.dy, b.y + pb.dy, p.t),
-        1.6,
-        0,
-        Math.PI * 2,
-      );
-      ctx.fill();
+      const ax = a.x + pa.dx;
+      const ay = a.y + pa.dy;
+      const bx = b.x + pb.dx;
+      const by = b.y + pb.dy;
+      const colour = s.hue > 0.7 ? RGB.violet : tint;
+      for (let k = 0; k < 4; k++) {
+        const tt = s.t - k * 0.035;
+        if (tt < 0) break;
+        const fade = Math.sin(Math.min(1, tt) * Math.PI) * vis * (1 - k * 0.24);
+        if (fade < 0.03) continue;
+        ctx.fillStyle = rgba(colour, 0.85 * fade);
+        ctx.beginPath();
+        ctx.arc(lerp(ax, bx, tt), lerp(ay, by, tt), 1.8 - k * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    /* Graph nodes and labels. */
-    ctx.font = `500 10px ${getComputedStyle(this.canvas).getPropertyValue("--font-mono") || "ui-monospace, monospace"}`;
+    /* 5 — nodes. Radius and haze scale with depth. */
+    const mono = getComputedStyle(this.canvas).getPropertyValue("--font-geist-mono").trim();
+    ctx.font = `500 10px ${mono || "ui-monospace, monospace"}`;
     ctx.textBaseline = "middle";
     for (const n of this.nodes) {
       if (n.a < 0.02) continue;
       const p = par(n.z);
       const x = n.x + p.dx;
       const y = n.y + p.dy;
-      const heat = Math.max(n.lit, n.e);
-      const r = 1.3 + n.weight * 2.1 + heat * 1.4;
-      const color = kindColor(n.kind);
-      const alpha = n.a * (0.5 + heat * 0.5);
+      const heat = Math.max(n.lit, n.e, n.pulse);
+      const r = (0.9 + n.weight * 2.2 + heat * 1.5) * (0.55 + n.z * 0.55);
+      const colour = kindColor(n.kind);
+      const hot = mix(colour, tint, Math.min(0.6, heat));
+      // Far nodes sink into the background rather than just shrinking.
+      const alpha = n.a * (0.38 + heat * 0.62) * (0.45 + n.z * 0.55);
 
-      if (heat > 0.25) {
-        const g = ctx.createRadialGradient(x, y, 0, x, y, r * 6);
-        g.addColorStop(0, `rgba(${color},${0.22 * (heat - 0.25) * n.a})`);
-        g.addColorStop(1, `rgba(${color},0)`);
+      if (heat > 0.22) {
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r * 7);
+        g.addColorStop(0, rgba(hot, 0.24 * (heat - 0.22) * n.a));
+        g.addColorStop(1, rgba(hot, 0));
         ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(x, y, r * 6, 0, Math.PI * 2);
+        ctx.arc(x, y, r * 7, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = `rgba(${color},${0.35 * heat * n.a})`;
+
+        ctx.strokeStyle = rgba(hot, 0.34 * heat * n.a);
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(x, y, r + 4 + heat * 3, 0, Math.PI * 2);
+        ctx.arc(x, y, r + 4.5 + heat * 4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      if (n.pulse > 0.08) {
+        ctx.strokeStyle = rgba(tint, 0.3 * n.pulse * n.a);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(x, y, r + 6 + (1 - n.pulse) * 26, 0, Math.PI * 2);
         ctx.stroke();
       }
 
-      ctx.fillStyle = `rgba(${color},${alpha})`;
+      ctx.fillStyle = rgba(hot, alpha);
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fill();
 
-      const la = Math.max(n.la, n.e * 0.9) * n.a;
-      if (la > 0.04) {
-        const text = n.kind === "project" || n.kind === "root" ? n.label.toUpperCase() : n.label;
-        ctx.fillStyle = `rgba(${n.kind === "root" ? COLOR.ink : heat > 0.3 ? COLOR.ink : COLOR.faint},${Math.min(0.9, la)})`;
-        ctx.fillText(text, x + r + 7, y + 0.5);
+      const la = Math.max(n.la, n.e * 0.85) * n.a;
+      // Cull in screen space: the camera zoom and pan mean a node inside
+      // the viewport can still render a label off the edge, or under the
+      // navigation rail on the right.
+      const sx = x * z + ox;
+      const sy = y * z + oy;
+      const labelFits =
+        sx > 14 && sx < this.w - (this.narrow ? 90 : 240) && sy > 16 && sy < this.h - 14;
+      if (la > 0.04 && labelFits) {
+        const text =
+          n.kind === "project" || n.kind === "root" || n.kind === "domain"
+            ? n.label.toUpperCase()
+            : n.label;
+        const shade = heat > 0.3 ? RGB.ink : RGB.faint;
+        ctx.fillStyle = rgba(shade, Math.min(0.92, la));
+        ctx.fillText(text, x + r + 8, y + 0.5);
       }
     }
 
-    // Opening pulse before the field emerges.
-    if (this.ignition < 0.35) {
-      const t = (this.time * 0.02) % 1;
-      const a = (1 - this.ignition / 0.35) * 0.5;
-      ctx.strokeStyle = `rgba(${COLOR.accent},${(1 - t) * a})`;
+    /* 6 — the opening pulse, before the field exists. */
+    if (this.ignition < 0.32) {
+      const t = (this.time * 0.018) % 1;
+      const a = (1 - this.ignition / 0.32) * 0.55;
+      ctx.strokeStyle = rgba(tint, (1 - t) * a);
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(this.w / 2, this.h / 2, 6 + t * 40, 0, Math.PI * 2);
+      ctx.arc(this.w / 2, this.h / 2, 6 + t * 46, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.fillStyle = `rgba(${COLOR.accent},${a * 1.6})`;
+      ctx.fillStyle = rgba(tint, a * 1.5);
       ctx.beginPath();
-      ctx.arc(this.w / 2, this.h / 2, 2.5, 0, Math.PI * 2);
+      ctx.arc(this.w / 2, this.h / 2, 2.6, 0, Math.PI * 2);
       ctx.fill();
     }
-    this.dirty = false;
   }
 }
-
-export { graphNodeById };

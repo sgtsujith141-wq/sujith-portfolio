@@ -8,7 +8,7 @@ const shots = "/projects/cryptodrishti";
 
 export const cryptodrishti: Project = {
   slug: "cryptodrishti",
-  index: "01",
+  index: "02",
   name: "CryptoDrishti",
   tagline: "Cryptographic discovery and quantum-risk analysis.",
   category: "Security tooling",
@@ -18,6 +18,7 @@ export const cryptodrishti: Project = {
   stack: ["Python 3.11+", "FastAPI", "cryptography", "SQLite", "Vanilla JS", "pytest"],
   concepts: ["cryptography", "quantum-risk", "cbom", "static-analysis", "pqc"],
   accent: "cyan",
+  visual: "crypto",
 
   problem: [
     "Post-quantum migration is mandated before anyone is ready for it. NIST has published the replacement algorithms and set deprecation milestones in IR 8547, but an organisation cannot migrate what it cannot enumerate.",

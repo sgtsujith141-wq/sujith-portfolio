@@ -28,16 +28,27 @@ interface Props {
   explainer?: ReactNode;
   /** Rendered full-width beneath the columns. */
   wide?: ReactNode;
-  /** Lets the Work scene find this article and its system window. */
-  register: (slug: Project["slug"], article: HTMLElement | null, stage: HTMLElement | null) => void;
+  /** Lets a parent scene find this article and its system window. */
+  register?: (slug: Project["slug"], article: HTMLElement | null, stage: HTMLElement | null) => void;
+  /** Case studies on their own route lead with the title; in a list they do not. */
+  headingLevel?: "h1" | "h3";
 }
 
-export function CaseStudy({ project, visual, explainer, wide, register }: Props) {
+export function CaseStudy({
+  project,
+  visual,
+  explainer,
+  wide,
+  register,
+  headingLevel = "h3",
+}: Props) {
   const { setHover } = useLivingSystem();
   const articleRef = useCallback(
-    (el: HTMLElement | null) => register(project.slug, el, el?.querySelector<HTMLElement>("[data-stage]") ?? null),
+    (el: HTMLElement | null) =>
+      register?.(project.slug, el, el?.querySelector<HTMLElement>("[data-stage]") ?? null),
     [project.slug, register],
   );
+  const Heading = headingLevel;
 
   const status = statusMeta[project.status];
 
@@ -59,9 +70,12 @@ export function CaseStudy({ project, visual, explainer, wide, register }: Props)
             </p>
           </Reveal>
           <Reveal delay={0.06}>
-            <h3 id={`project-${project.slug}-title`} className="display mt-6 text-[clamp(2.4rem,6vw,5rem)] text-ink">
+            <Heading
+              id={`project-${project.slug}-title`}
+              className="display mt-6 text-[clamp(2.4rem,6vw,5rem)] text-ink"
+            >
               {project.name}
-            </h3>
+            </Heading>
           </Reveal>
           <Reveal delay={0.12}>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">{project.tagline}</p>
@@ -69,15 +83,23 @@ export function CaseStudy({ project, visual, explainer, wide, register }: Props)
           <Reveal delay={0.18}>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <StatusPill tone={status.tone}>{status.label}</StatusPill>
-              <a
-                href={project.repo}
-                target="_blank"
-                rel="noreferrer"
-                className="group inline-flex items-center gap-2 border border-line-strong px-3.5 py-2 text-sm text-ink transition-colors hover:border-accent-soft hover:text-accent-soft"
-              >
-                <span className="mono text-[11px]">{project.repo.replace("https://github.com/", "")}</span>
-                <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
-              </a>
+              {project.repo ? (
+                <a
+                  href={project.repo}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group inline-flex items-center gap-2 border border-line-strong px-3.5 py-2 text-sm text-ink transition-colors hover:border-accent-soft hover:text-accent-soft"
+                >
+                  <span className="mono text-[11px]">
+                    {project.repo.replace("https://github.com/", "")}
+                  </span>
+                  <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+                </a>
+              ) : (
+                <span className="mono border border-line px-3.5 py-2 text-[11px] text-faint">
+                  No repository — this one is a machine
+                </span>
+              )}
             </div>
             <p className="mt-4 text-sm text-faint">{project.statusNote}</p>
           </Reveal>

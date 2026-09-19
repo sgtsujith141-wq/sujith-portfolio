@@ -9,7 +9,7 @@ const shots = "/projects/aether-health";
 
 export const aetherHealth: Project = {
   slug: "aether-health",
-  index: "04",
+  index: "05",
   name: "Aether Health",
   tagline: "An AI-assisted personal health companion prototype.",
   category: "Health & AI prototype",
@@ -19,6 +19,7 @@ export const aetherHealth: Project = {
   stack: ["React 19", "Vite 6", "TypeScript", "Tailwind CSS 4", "Zustand", "Express", "Gemini API"],
   concepts: ["ai", "health", "product"],
   accent: "violet",
+  visual: "aether",
 
   problem: [
     "A single place to log health data, track medications and appointments, keep records, and ask questions of a health-context assistant — built quickly enough to demonstrate the product direction.",

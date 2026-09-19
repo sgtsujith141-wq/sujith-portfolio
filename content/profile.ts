@@ -20,8 +20,9 @@ export const profile = {
   name: "Sujith C",
   displayName: "SUJITH C",
   role: "Computer Science & Engineering Student",
+  /** One grounded line. The hero renders `headline` from content/identity.ts. */
   statement:
-    "Building at the intersection of cybersecurity, AI and software systems.",
+    "Second-year CSE student in Bengaluru. I run a Debian server at home, take systems apart to see how they work, and build software I can hand to someone else.",
   location: "Bengaluru, India",
 
   education: {
@@ -35,12 +36,14 @@ export const profile = {
     cgpaScale: "10",
   },
 
+  /** Short labels for the hero rail. The full model is content/identity.ts. */
   interests: [
+    "Networking",
     "Cybersecurity",
-    "Artificial intelligence",
-    "Software engineering",
-    "Systems engineering",
-    "Building useful software",
+    "Computer systems",
+    "Linux",
+    "Servers & self-hosting",
+    "AI & useful software",
   ],
 
   links: {
@@ -64,9 +67,9 @@ export const profile = {
   },
 
   meta: {
-    title: "Sujith C — Cybersecurity, AI & Software Systems",
+    title: "Sujith C — Networks, Systems & Self-Hosting",
     description:
-      "Computer Science & Engineering student building at the intersection of cybersecurity, AI and software systems. CryptoDrishti, SurakshaScore and Aether Health, with verified engineering evidence.",
+      "Computer Science & Engineering student exploring networking, cybersecurity, Linux and infrastructure. A Debian home lab, security tooling and useful software, with verified engineering evidence.",
     url: env(process.env.NEXT_PUBLIC_SITE_URL) ?? "https://sujith-portfolio-two.vercel.app",
   },
 } as const;

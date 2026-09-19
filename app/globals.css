@@ -223,6 +223,15 @@ html[data-intro="pending"] [data-enter="rise"] {
 html[data-intro="pending"] [data-enter="nav"] {
   transform: translate3d(0, -6px, 0);
 }
+/* Display lines start below their mask and rise into it. */
+html[data-intro="pending"] [data-enter="line"] {
+  transform: translate3d(0, 108%, 0);
+  opacity: 1;
+}
+[data-enter="line"] {
+  transition: transform 1100ms var(--ease-out-expo);
+  transition-delay: var(--enter-delay, 0ms);
+}
 [data-enter] {
   transition:
     opacity 640ms var(--ease-out-expo),

@@ -11,8 +11,12 @@ export function EvolutionTimeline() {
     <div>
       <ol className="relative grid gap-px bg-line-soft lg:grid-cols-4">
         {evolution.map((stage, i) => (
-          <Reveal key={stage.id} delay={i * 0.08}>
-            <li className={cn("relative h-full bg-base p-6", i === evolution.length - 1 && "bg-surface")}>
+          <Reveal
+            as="li"
+            key={stage.id}
+            delay={i * 0.08}
+            className={cn("relative h-full bg-base p-6", i === evolution.length - 1 && "bg-surface")}
+          >
               <div className="flex items-center gap-3">
                 <span
                   className={cn(
@@ -36,7 +40,6 @@ export function EvolutionTimeline() {
               >
                 {stage.repo} →
               </a>
-            </li>
           </Reveal>
         ))}
       </ol>
