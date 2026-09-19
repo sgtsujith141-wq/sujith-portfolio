@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Geist, Geist_Mono } from "next/font/google";
 import { profile } from "@/content/profile";
+import { LivingSystem } from "@/components/canvas/living-system";
+import { SkipLink } from "@/components/layout/skip-link";
+import { Footer } from "@/components/layout/footer";
 import "./globals.css";
 
 /* Fonts are self-hosted through next/font: no runtime request to Google.
@@ -13,17 +16,8 @@ const archivo = Archivo({
   axes: ["wdth"],
 });
 
-const geist = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist",
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-  display: "swap",
-});
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
 
 function metadataBase(url: string): URL | undefined {
   try {
@@ -35,23 +29,21 @@ function metadataBase(url: string): URL | undefined {
 
 export const metadata: Metadata = {
   metadataBase: metadataBase(profile.meta.url),
-  title: {
-    default: profile.meta.title,
-    template: `%s — ${profile.name}`,
-  },
+  title: { default: profile.meta.title, template: `%s — ${profile.name}` },
   description: profile.meta.description,
   applicationName: profile.name,
   authors: [{ name: profile.name, url: profile.links.github }],
   creator: profile.name,
   keywords: [
     "Sujith C",
+    "networking",
     "cybersecurity",
-    "post-quantum cryptography",
-    "CBOM",
-    "CryptoDrishti",
-    "SurakshaScore",
-    "Aether Health",
-    "software engineering portfolio",
+    "Linux",
+    "home lab",
+    "self-hosting",
+    "Debian",
+    "Tailscale",
+    "CSE student",
     "BMSIT",
   ],
   openGraph: {
@@ -68,7 +60,6 @@ export const metadata: Metadata = {
     description: profile.meta.description,
   },
   robots: { index: true, follow: true },
-  alternates: { canonical: "/" },
 };
 
 export const viewport: Viewport = {
@@ -78,17 +69,16 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-/* Runs before first paint. Stamps the opening state so hero elements do
- * not flash before their choreography, then releases it on its own timer
- * so the entrance starts even before React has hydrated on a slow device.
- * Deliberately consults no storage: every real page load replays the
- * opening. Reduced motion skips it entirely. */
+/* Runs before first paint. Hides the entrance elements, then releases
+ * them on its own timer so the choreography starts even before React has
+ * hydrated on a slow device. No storage is consulted, so every real page
+ * load replays it. Reduced motion skips it entirely. */
 const INTRO_GATE = `
 try {
   var r = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var d = document.documentElement;
   d.setAttribute('data-intro', r ? 'done' : 'pending');
-  if (!r) setTimeout(function () { d.setAttribute('data-intro', 'done'); }, 260);
+  if (!r) setTimeout(function () { d.setAttribute('data-intro', 'done'); }, 240);
 } catch (e) {
   document.documentElement.setAttribute('data-intro', 'done');
 }
@@ -107,7 +97,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <style>{`[data-enter]{opacity:1!important;transform:none!important}`}</style>
         </noscript>
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {/* One canvas for the whole site, mounted above the router so
+            moving between the home page and /work never resets it. */}
+        <LivingSystem>
+          <SkipLink />
+          {children}
+          <Footer />
+        </LivingSystem>
+      </body>
     </html>
   );
 }

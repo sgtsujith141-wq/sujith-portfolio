@@ -4,48 +4,49 @@ import type { ExplorationTheme } from "@/lib/types";
  *  CURRENT EXPLORATION — direction of study, never claims of expertise.
  *
  *  "active" means there is a repository or a running machine behind it.
- *  "planned" means exactly that. Nothing here is a finished product.
+ *  "planned" means exactly that, and is on the record so it cannot be
+ *  quietly promoted to finished later.
  * ══════════════════════════════════════════════════════════════════════ */
 
 export const explorationThemes: ExplorationTheme[] = [
   {
-    id: "pqc",
-    title: "Post-quantum cryptography",
+    id: "networking",
+    title: "Networking, properly",
     status: "active",
     detail:
-      "How to inventory the cryptography that actually exists in a codebase, and how to model an unknown Q-Day honestly. CryptoDrishti's open items: real parsers for the nine regex-covered languages, Mach-O and PE symbol tables, and splitting RSA into signing and key-transport entries.",
-    threads: ["NIST IR 8547 milestones", "CycloneDX CBOM", "Mosca's inequality"],
+      "Working through the theory behind the network I already run: subnetting, how DNS resolution actually proceeds, and what WireGuard is doing underneath Tailscale. The lab is the test bench — if I get it wrong, something at home stops.",
+    threads: ["Subnetting", "DNS resolution", "WireGuard internals", "Routing"],
   },
   {
-    id: "explainable-security",
-    title: "Explainable security scoring",
+    id: "infrastructure",
+    title: "Making the lab less fragile",
     status: "active",
     detail:
-      "Making a security score something a reviewer can audit rather than a number to trust. Next for SurakshaScore: the Android native bridge, so Tier 1 and Tier 2 signals are real on a device instead of only in tests.",
-    threads: ["Provenance as a type", "Unavailable, not guessed", "Pure scoring functions"],
+      "The honest gap in my setup is that there is no backup strategy and no monitoring — I find out a service died when someone tells me. Fixing those two things, in that order, is the current project.",
+    threads: ["Backups", "Monitoring", "Service recovery"],
+  },
+  {
+    id: "security-fundamentals",
+    title: "Security fundamentals",
+    status: "active",
+    detail:
+      "The groundwork rather than the tooling: authentication, permissions and trust boundaries, and how they are supposed to work before studying how they fail. Carried into the apps as a rule that a platform which cannot answer renders as unavailable.",
+    threads: ["Access control", "Trust boundaries", "Common vulnerability classes"],
   },
   {
     id: "applied-ai",
     title: "AI inside bounded products",
     status: "active",
     detail:
-      "Where a language model belongs in a small application and where it does not. Aether Health routes model calls through a server and extracts text before sending it; the open work is consolidating its two backends and adding a test suite.",
-    threads: ["Server-side model calls", "Text before upload", "Deterministic fallbacks"],
-  },
-  {
-    id: "systems",
-    title: "Linux, networking and systems",
-    status: "active",
-    detail:
-      "A Debian 12 home server is the lab: services under CasaOS, storage that survives a reboot, remote access over Tailscale with nothing forwarded to the public internet.",
-    threads: ["Debian 12", "Tailscale / WireGuard", "Storage and permissions"],
+      "Where a model belongs in a small application and where it does not. Aether Health's open work is consolidating its two backends and adding a test suite; the interesting question is which parts should never be left to a model at all.",
+    threads: ["Server-side model calls", "Deterministic fallbacks", "Bounded scope"],
   },
   {
     id: "labs",
     title: "Security labs and CTF",
     status: "planned",
     detail:
-      "An isolated lab against deliberately vulnerable targets, and beginner CTF categories with written reasoning — including attempts that go nowhere. Not started yet; listed so the direction is on record.",
+      "An isolated lab against deliberately vulnerable targets, and beginner CTF categories with written reasoning — including the attempts that go nowhere. Not started yet; listed so the direction is on record rather than implied.",
     threads: ["Isolated VM lab", "Entry-level categories", "Writeup discipline"],
   },
 ];

@@ -1,30 +1,29 @@
-import { LivingSystem } from "@/components/canvas/living-system";
 import { NavRail } from "@/components/layout/nav-rail";
 import { MobileNav } from "@/components/layout/mobile-nav";
-import { SkipLink } from "@/components/layout/skip-link";
-import { Footer } from "@/components/layout/footer";
-import { Hero } from "@/components/scenes/hero";
-import { Work } from "@/components/scenes/work";
-import { Evidence } from "@/components/scenes/evidence";
-import { About } from "@/components/scenes/about";
-import { Exploration } from "@/components/scenes/exploration";
-import { Connect } from "@/components/scenes/connect";
+import { Hero } from "@/components/home/hero";
+import { About } from "@/components/home/about";
+import { TechnicalWorld } from "@/components/home/technical-world";
+import { HomeLabSection } from "@/components/home/homelab-section";
+import { Exploring } from "@/components/home/exploring";
+import { WorkTeaser } from "@/components/home/work-teaser";
+import { Connect } from "@/components/home/connect";
 
+/* The home page is about Sujith. Projects are previewed by the teaser
+ * and live in full at /work. */
 export default function Page() {
   return (
-    <LivingSystem>
-      <SkipLink />
+    <>
       <NavRail />
       <MobileNav />
       <main id="main" className="relative z-[1]">
         <Hero />
-        <Work />
-        <Evidence />
         <About />
-        <Exploration />
+        <TechnicalWorld />
+        <HomeLabSection />
+        <Exploring />
+        <WorkTeaser />
         <Connect />
       </main>
-      <Footer />
-    </LivingSystem>
+    </>
   );
 }

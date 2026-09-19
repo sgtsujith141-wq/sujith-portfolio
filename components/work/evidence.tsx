@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ciMatrix, snapshots, REPORT_DATE, VERIFIED_ON } from "@/content/evidence";
 import { projectBySlug } from "@/content/projects";
 import { ArchitectureExplorer } from "@/components/projects/architecture-explorer";
@@ -10,10 +11,10 @@ import { formatDate } from "@/lib/utils";
  * architecture for each project. No live counters. */
 export function Evidence() {
   return (
-    <section id="evidence" aria-labelledby="evidence-title" className="content-auto relative px-6 py-28 lg:px-12 lg:py-40">
+    <section id="evidence" aria-labelledby="evidence-title" className="content-auto relative px-6 py-24 lg:px-12 lg:py-32">
       <div className="mx-auto max-w-6xl">
         <SectionHeader
-          index="03"
+          index="→"
           label="Engineering evidence"
           title={<span id="evidence-title">Verified, dated, reproducible.</span>}
           lede={
@@ -29,8 +30,12 @@ export function Evidence() {
           {snapshots.map((s, i) => {
             const project = projectBySlug[s.project];
             return (
-              <Reveal key={s.id} delay={(i % 4) * 0.05}>
-                <li className="flex h-full flex-col bg-base p-6">
+              <Reveal
+                as="li"
+                key={s.id}
+                delay={(i % 4) * 0.05}
+                className="flex h-full flex-col bg-base p-6"
+              >
                   <p className="label">{project.name}</p>
                   <p className="display mt-5 text-[2.4rem] leading-none text-ink">{s.value}</p>
                   <p className="mt-2 text-sm text-muted">{s.label}</p>
@@ -40,7 +45,6 @@ export function Evidence() {
                     <br />
                     {s.method}
                   </p>
-                </li>
               </Reveal>
             );
           })}
@@ -62,9 +66,9 @@ export function Evidence() {
                 {ciMatrix.map((row) => (
                   <tr key={row.project} className="border-b border-line-soft last:border-0">
                     <td className="px-5 py-4 align-top">
-                      <a href={projectBySlug[row.project].repo} target="_blank" rel="noreferrer" className="link-line text-ink">
+                      <Link href={`/work/${row.project}`} className="link-line text-ink">
                         {row.project}
-                      </a>
+                      </Link>
                     </td>
                     <td className="mono px-5 py-4 align-top text-faint">{row.commit}</td>
                     <td className="px-5 py-4 align-top text-muted">

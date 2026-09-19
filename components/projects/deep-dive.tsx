@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Project } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 
@@ -36,7 +37,9 @@ export function DeepDive({ project }: { project: Project }) {
       </div>
       <p className="border-t border-line-soft px-5 py-3 text-xs text-faint">
         The component graph for this project is explorable in{" "}
-        <a href="#evidence" className="link-line text-ink">Engineering Evidence</a>.
+        <Link href="/work#evidence" className="link-line text-ink">
+          Engineering Evidence
+        </Link>.
       </p>
     </details>
   );

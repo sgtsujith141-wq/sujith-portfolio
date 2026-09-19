@@ -28,7 +28,7 @@ export const criticalCeiling = 79;
 
 export const surakshascore: Project = {
   slug: "surakshascore",
-  index: "02",
+  index: "03",
   name: "SurakshaScore",
   tagline: "A personal digital hygiene scanner that turns device, account and privacy posture into one explainable security score.",
   category: "Security & privacy application",
@@ -38,6 +38,7 @@ export const surakshascore: Project = {
   stack: ["React 18", "TypeScript (strict)", "Vite 5", "Tailwind CSS 3", "Capacitor 7", "Vitest"],
   concepts: ["cybersecurity", "privacy", "security-posture", "explainable-scoring", "k-anonymity"],
   accent: "blue",
+  visual: "signals",
 
   problem: [
     "Consumer security apps present a single score with no derivation, mix verified facts with guesses, and quietly default a field to “pass” when the platform will not tell them the answer.",

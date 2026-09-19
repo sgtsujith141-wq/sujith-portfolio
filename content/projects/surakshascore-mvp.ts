@@ -47,16 +47,17 @@ export const comparison = [
 
 export const surakshascoreMvp: Project = {
   slug: "surakshascore-mvp",
-  index: "03",
+  index: "04",
   name: "SurakshaScore MVP",
   tagline: "The prototype SurakshaScore grew out of, kept public as a record of where the idea started.",
-  category: "Archived prototype",
+  category: "Security & privacy — the predecessor",
   status: "archived",
   statusNote: "Feature work has stopped. Typecheck and production build pass; 206 pre-existing lint errors are recorded, not hidden.",
   repo: "https://github.com/sgtsujith141-wq/surakshascore-mvp",
   stack: ["React 18", "TypeScript", "Vite", "Supabase", "Capacitor", "Electron", "Web Crypto API"],
   concepts: ["cybersecurity", "privacy", "web-crypto", "k-anonymity"],
   accent: "slate",
+  visual: "evolution",
 
   problem: [
     "The first attempt at a personal digital safety toolkit: prove that a guided checkup, remediation playbooks, a client-side encrypted vault and a breach check that never transmits the password could work in one app.",

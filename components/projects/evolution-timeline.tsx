@@ -11,8 +11,12 @@ export function EvolutionTimeline() {
     <div>
       <ol className="relative grid gap-px bg-line-soft lg:grid-cols-4">
         {evolution.map((stage, i) => (
-          <Reveal key={stage.id} delay={i * 0.08}>
-            <li className={cn("relative h-full bg-base p-6", i === evolution.length - 1 && "bg-surface")}>
+          <Reveal
+            as="li"
+            key={stage.id}
+            delay={i * 0.08}
+            className={cn("relative h-full bg-base p-6", i === evolution.length - 1 && "bg-surface")}
+          >
               <div className="flex items-center gap-3">
                 <span
                   className={cn(
@@ -26,7 +30,7 @@ export function EvolutionTimeline() {
               {i < evolution.length - 1 ? (
                 <span aria-hidden className="absolute right-0 top-[31px] hidden h-px w-6 translate-x-full bg-line-strong lg:block" />
               ) : null}
-              <h4 className="display mt-5 text-xl text-ink">{stage.title}</h4>
+              <h3 className="display mt-5 text-xl text-ink">{stage.title}</h3>
               <p className="mt-3 text-sm leading-relaxed text-muted">{stage.detail}</p>
               <a
                 href={`${GH}/${stage.repo}`}
@@ -36,7 +40,6 @@ export function EvolutionTimeline() {
               >
                 {stage.repo} →
               </a>
-            </li>
           </Reveal>
         ))}
       </ol>

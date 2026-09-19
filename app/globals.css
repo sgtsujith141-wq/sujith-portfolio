@@ -223,11 +223,42 @@ html[data-intro="pending"] [data-enter="rise"] {
 html[data-intro="pending"] [data-enter="nav"] {
   transform: translate3d(0, -6px, 0);
 }
+/* Display lines start below their mask and rise into it. */
+html[data-intro="pending"] [data-enter="line"] {
+  transform: translate3d(0, 108%, 0);
+  opacity: 1;
+}
+[data-enter="line"] {
+  transition: transform 1100ms var(--ease-out-expo);
+  transition-delay: var(--enter-delay, 0ms);
+}
 [data-enter] {
   transition:
     opacity 640ms var(--ease-out-expo),
     transform 900ms var(--ease-out-expo);
   transition-delay: var(--enter-delay, 0ms);
+}
+
+/* The light field: one composited layer, no canvas pixels. Its colour
+ * comes from --light-rgb, which the engine sets per section, and it is
+ * moved only by transform so it never leaves the compositor. */
+.light-field {
+  width: 120vmax;
+  height: 120vmax;
+  background: radial-gradient(
+    closest-side,
+    rgba(var(--light-rgb, 79, 124, 255), 0.1),
+    rgba(var(--light-rgb, 79, 124, 255), 0.04) 45%,
+    transparent 72%
+  );
+  will-change: transform, opacity;
+  transition: opacity 600ms var(--ease-out-expo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .light-field {
+    transition: none;
+  }
 }
 
 @keyframes pulse-dot {

@@ -2,27 +2,49 @@
 
 Next.js 16 (App Router) · React 19 · TypeScript 5.9 (strict, `noUncheckedIndexedAccess`) ·
 Tailwind CSS 4 · Motion for React 13 · GSAP 3.15 + ScrollTrigger · Canvas 2D.
-Single static page, no backend, no runtime data fetching.
+Static, no backend, no runtime data fetching. Thirteen prerendered routes:
+the home page, `/work`, a page per project, and the metadata routes.
 
 ```
-app/                       route, layout, metadata, social image, sitemap, robots
+app/
+  layout.tsx               mounts the canvas ABOVE the router, so the field is
+                           continuous across routes; skip link, footer, metadata
+  page.tsx                 home — seven sections about Sujith
+  work/page.tsx            the work index plus engineering evidence
+  work/[slug]/page.tsx     one case study per project (generateStaticParams)
 content/                   every fact on the site — typed, with sources
   profile.ts               identity, contact, resume switch, metadata
-  navigation.ts            the six sections; feeds rail, mobile nav, scroll-spy, engine
-  projects/*.ts            four case studies (problem, solution, steps, architecture,
-                           evidence, verification log, decisions, limitations, screenshots)
+  identity.ts              domains, skills, principles — the personal model
+  homelab.ts               the lab: services, topology, honesty constraints
+  navigation.ts            the seven home sections; feeds rail, mobile nav,
+                           scroll-spy and the background engine
+  projects/*.ts            five case studies, home lab included
   evidence.ts              dated snapshots and the CI matrix
-  graph.ts                 the semantic graph the background renders
-  about.ts · exploration.ts
+  graph.ts                 the semantic graph the background renders, derived
+                           from identity.ts, homelab.ts and the projects
+  exploration.ts
 components/
   canvas/                  LivingSystem provider + engine/ (formations, engine)
-  scenes/                  hero, work, evidence, about, exploration, connect
+  home/                    the seven home sections + the personal network
+  homelab/                 the interactive topology (shared: home page + case study)
+  work/                    work header, index, case-study view, evidence
   projects/                case-study frame and the per-project visuals
   layout/                  nav rail, mobile nav, skip link, footer
   ui/ · animations/        primitives
-hooks/ · lib/              media queries, reduced motion, active section, gsap registration
+hooks/ · lib/              media queries, reduced motion, active section, gsap
 public/projects/<slug>/    real screenshots copied from the repositories
 ```
+
+## Identity model
+
+Three ideas are kept apart on purpose, because conflating them is how a portfolio
+ends up presenting a test runner as a personality trait:
+
+| Concept | Lives in | Appears |
+|---|---|---|
+| Domains — what he explores | `content/identity.ts` | hero rail, personal network, background |
+| Skills — what he has used, with a level | `content/identity.ts` | About |
+| Project stack — what a repository imports | `content/projects/*.ts` | that case study only |
 
 ## Data flow
 
@@ -33,12 +55,25 @@ Work scene (pin), galleries and models with local state, the navigation.
 ## The Living System
 
 ```
-scroll ──► LivingSystem provider ──► engine.setSection(id, progress)
-                 │                    engine.setStage(rect of [data-stage])
-Work scene ──────┼──► engine.setFocus(slug)      (article under the viewport midline)
- (pin) ──────────┼──► engine.setPhase(p)         (ScrollTrigger progress, 0–1)
+scroll ──────────► LivingSystem provider ──► engine.setSection(name, progress)
+route ───────────┤                           engine.setStage(measured rect)
+personal network ┼──► engine.setDomain(id)   (the signature selection)
+case study ──────┼──► engine.setFocus(slug)
+pinned scene ────┼──► engine.setPhase(p)
 pointer ─────────┴──► engine.setPointer(x, y)
+
+                 └──► engine.readLight() ──► the composited light layer
 ```
+
+On `/work*` the provider holds the `work-route` formation and derives progress from
+document scroll; on the home page it measures the seven sections and reports whichever
+holds the viewport midline. Because the provider lives in the root layout, navigating
+between the two changes the formation without restarting the field.
+
+**The light field is not canvas pixels.** Filling the viewport with radial gradients
+cost roughly ten million pixel writes per frame. It is now one composited DOM layer
+moved by transform and tinted from a CSS custom property that the engine publishes, so
+the main thread paints nothing for it.
 
 `formations.ts` is pure: `(viewport, input) → targets`. Each section has a
 formation; Work has two (reorganisation while pinned; a focused world while a case

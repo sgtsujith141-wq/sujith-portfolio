@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { X, Menu } from "lucide-react";
 import { sections } from "@/content/navigation";
@@ -118,6 +119,9 @@ export function MobileNav() {
               <a href={profile.links.linkedin} target="_blank" rel="noreferrer" className="link-line text-sm text-muted">
                 LinkedIn
               </a>
+              <Link href="/work" className="link-line text-sm text-muted">
+                Work
+              </Link>
               {profile.resume.available ? (
                 <a href={profile.resume.href} target="_blank" rel="noreferrer" className="link-line text-sm text-muted">
                   Resume

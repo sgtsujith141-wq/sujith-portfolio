@@ -11,12 +11,23 @@ interface Props {
   className?: string;
   once?: boolean;
   amount?: number;
+  /** Render as a list item so <ol>/<ul> keep valid children. */
+  as?: "div" | "li";
 }
 
 /** Enters when scrolled into view: a short rise and fade. Respects reduced motion via MotionConfig. */
-export function Reveal({ children, delay = 0, y = 18, className, once = true, amount = 0.25 }: Props) {
+export function Reveal({
+  children,
+  delay = 0,
+  y = 18,
+  className,
+  once = true,
+  amount = 0.25,
+  as = "div",
+}: Props) {
+  const Tag = as === "li" ? motion.li : motion.div;
   return (
-    <motion.div
+    <Tag
       className={cn(className)}
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -24,6 +35,6 @@ export function Reveal({ children, delay = 0, y = 18, className, once = true, am
       transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
-    </motion.div>
+    </Tag>
   );
 }

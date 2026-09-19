@@ -1,25 +1,33 @@
-import type { ProjectSlug, SectionId } from "@/lib/types";
+import { domains } from "./identity";
+import { services } from "./homelab";
+import type { DomainId, ProjectSlug } from "@/lib/types";
 
 /* ══════════════════════════════════════════════════════════════════════
  *  THE LIVING SYSTEM GRAPH
  *
- *  The background is not decoration: its labelled nodes are the actual
- *  entities of the work — Sujith, the four repositories, the technologies
- *  they use, the concepts they connect to and the evidence behind them.
- *  Edges are real relationships read from the repositories. Nothing here
- *  simulates live activity; the signals that travel along edges are a
- *  visual metaphor and are labelled as such in the documentation.
+ *  The background is not decoration: its nodes are the actual entities of
+ *  Sujith's technical world — himself, the domains he explores, the
+ *  services running in his home lab, his projects, and the evidence
+ *  behind them. Edges are real relationships, derived from the same
+ *  content the page renders.
+ *
+ *  Two grouping axes let a formation organise the field either way:
+ *    `domain`  — which interest this node belongs to
+ *    `project` — which repository (or the lab) this node belongs to
+ *
+ *  Signals travelling along edges are a visual metaphor. Nothing here
+ *  simulates live activity, and the documentation says so.
  * ══════════════════════════════════════════════════════════════════════ */
 
-export type GraphKind = "root" | "project" | "tech" | "concept" | "evidence";
+export type GraphKind = "root" | "domain" | "service" | "project" | "tech" | "evidence";
 
 export interface GraphNode {
   id: string;
   label: string;
   kind: GraphKind;
-  /** Which project cluster this node belongs to; "core" for shared. */
-  cluster: ProjectSlug | "core";
-  /** Relative visual weight 0.4–1. Drives radius and label priority. */
+  domain: DomainId | null;
+  project: ProjectSlug | null;
+  /** Relative visual weight 0.35–1. Drives radius and label priority. */
   weight: number;
 }
 
@@ -32,141 +40,136 @@ const N = (
   id: string,
   label: string,
   kind: GraphKind,
-  cluster: GraphNode["cluster"],
-  weight = 0.6,
-): GraphNode => ({ id, label, kind, cluster, weight });
+  domain: DomainId | null,
+  project: ProjectSlug | null,
+  weight = 0.55,
+): GraphNode => ({ id, label, kind, domain, project, weight });
+
+/* ── Nodes ─────────────────────────────────────────────────────────── */
+
+const rootNode: GraphNode = N("sujith", "SUJITH C", "root", null, null, 1);
+
+/** The seven domains, straight from the identity model. */
+const domainNodes: GraphNode[] = domains.map((d) =>
+  N(d.id, d.label, "domain", d.id, null, 0.88),
+);
+
+/** Every home-lab service, prefixed so ids never collide with a domain. */
+const serviceNodes: GraphNode[] = services.map((s) =>
+  N(
+    `svc-${s.id}`,
+    s.label,
+    "service",
+    s.domains[0] ?? "infrastructure",
+    "home-lab",
+    s.kind === "host" || s.kind === "platform" ? 0.72 : 0.6,
+  ),
+);
+
+const projectNodes: GraphNode[] = [
+  N("p-home-lab", "Home Lab", "project", "infrastructure", "home-lab", 0.92),
+  N("p-cryptodrishti", "CryptoDrishti", "project", "software", "cryptodrishti", 0.92),
+  N("p-surakshascore", "SurakshaScore", "project", "cybersecurity", "surakshascore", 0.92),
+  N("p-surakshascore-mvp", "SurakshaScore MVP", "project", "cybersecurity", "surakshascore-mvp", 0.68),
+  N("p-aether-health", "Aether Health", "project", "ai", "aether-health", 0.82),
+];
+
+/** Technologies, attached to the project that actually uses them. */
+const techNodes: GraphNode[] = [
+  N("t-wireguard", "WireGuard", "tech", "networking", "home-lab", 0.5),
+  N("t-nat", "NAT & addressing", "tech", "networking", "home-lab", 0.45),
+  N("t-terminal", "Terminal", "tech", "linux", "home-lab", 0.45),
+  N("t-permissions", "Permissions", "tech", "linux", "home-lab", 0.42),
+  N("t-containers", "Containers", "tech", "infrastructure", "home-lab", 0.45),
+  N("t-python", "Python", "tech", "software", "cryptodrishti", 0.55),
+  N("t-fastapi", "FastAPI", "tech", "software", "cryptodrishti", 0.42),
+  N("t-cyclonedx", "CycloneDX 1.6", "tech", "software", "cryptodrishti", 0.48),
+  N("t-typescript", "TypeScript", "tech", "software", "surakshascore", 0.52),
+  N("t-react", "React", "tech", "software", "surakshascore", 0.45),
+  N("t-kanon", "k-anonymity", "tech", "cybersecurity", "surakshascore", 0.45),
+  N("t-webcrypto", "Web Crypto", "tech", "cybersecurity", "surakshascore-mvp", 0.42),
+  N("t-express", "Express", "tech", "software", "aether-health", 0.42),
+  N("t-gemini", "Gemini API", "tech", "ai", "aether-health", 0.45),
+];
+
+const evidenceNodes: GraphNode[] = [
+  N("e-226", "226 tests", "evidence", "software", "cryptodrishti", 0.55),
+  N("e-ci-py", "CI 3.11–3.13", "evidence", "software", "cryptodrishti", 0.45),
+  N("e-107", "107 tests", "evidence", "software", "surakshascore", 0.55),
+  N("e-isolation", "Isolation test", "evidence", "software", "surakshascore", 0.45),
+  N("e-build", "Client + server build", "evidence", "software", "aether-health", 0.42),
+  N("e-typecheck", "Typecheck pass", "evidence", "software", "surakshascore-mvp", 0.4),
+  N("e-uptime", "4 services, 1 node", "evidence", "infrastructure", "home-lab", 0.45),
+];
 
 export const graphNodes: GraphNode[] = [
-  N("sujith", "SUJITH C", "root", "core", 1),
-
-  // Projects
-  N("cryptodrishti", "CryptoDrishti", "project", "cryptodrishti", 0.95),
-  N("surakshascore", "SurakshaScore", "project", "surakshascore", 0.95),
-  N("surakshascore-mvp", "SurakshaScore MVP", "project", "surakshascore-mvp", 0.7),
-  N("aether-health", "Aether Health", "project", "aether-health", 0.85),
-
-  // Concepts
-  N("cryptography", "Cryptography", "concept", "cryptodrishti", 0.7),
-  N("quantum-risk", "Quantum risk", "concept", "cryptodrishti", 0.7),
-  N("cbom", "CBOM validation", "concept", "cryptodrishti", 0.65),
-  N("static-analysis", "Static analysis", "concept", "cryptodrishti", 0.55),
-  N("pqc", "Post-quantum", "concept", "cryptodrishti", 0.6),
-  N("cybersecurity", "Cybersecurity", "concept", "core", 0.8),
-  N("privacy", "Privacy", "concept", "surakshascore", 0.65),
-  N("security-posture", "Security posture", "concept", "surakshascore", 0.65),
-  N("explainable-scoring", "Explainable scoring", "concept", "surakshascore", 0.7),
-  N("k-anonymity", "k-anonymity", "concept", "surakshascore", 0.55),
-  N("web-crypto", "Web Crypto", "concept", "surakshascore-mvp", 0.5),
-  N("ai", "AI", "concept", "core", 0.8),
-  N("health", "Health", "concept", "aether-health", 0.55),
-  N("product", "Product", "concept", "aether-health", 0.5),
-  N("systems", "Systems", "concept", "core", 0.7),
-
-  // Technologies
-  N("python", "Python", "tech", "cryptodrishti", 0.6),
-  N("fastapi", "FastAPI", "tech", "cryptodrishti", 0.5),
-  N("sqlite", "SQLite", "tech", "cryptodrishti", 0.4),
-  N("cyclonedx", "CycloneDX 1.6", "tech", "cryptodrishti", 0.55),
-  N("typescript", "TypeScript", "tech", "core", 0.65),
-  N("react", "React", "tech", "core", 0.6),
-  N("vite", "Vite", "tech", "surakshascore", 0.45),
-  N("capacitor", "Capacitor", "tech", "surakshascore", 0.45),
-  N("vitest", "Vitest", "tech", "surakshascore", 0.45),
-  N("supabase", "Supabase", "tech", "surakshascore-mvp", 0.45),
-  N("electron", "Electron", "tech", "surakshascore-mvp", 0.4),
-  N("express", "Express", "tech", "aether-health", 0.5),
-  N("gemini", "Gemini API", "tech", "aether-health", 0.5),
-  N("zustand", "Zustand", "tech", "aether-health", 0.4),
-  N("debian", "Debian 12", "tech", "core", 0.5),
-  N("tailscale", "Tailscale", "tech", "core", 0.45),
-
-  // Evidence
-  N("ev-226", "226 tests", "evidence", "cryptodrishti", 0.6),
-  N("ev-ci-py", "CI 3.11–3.13", "evidence", "cryptodrishti", 0.5),
-  N("ev-107", "107 tests", "evidence", "surakshascore", 0.6),
-  N("ev-isolation", "Isolation test", "evidence", "surakshascore", 0.5),
-  N("ev-build", "Client + server build", "evidence", "aether-health", 0.45),
-  N("ev-typecheck", "Typecheck pass", "evidence", "surakshascore-mvp", 0.4),
+  rootNode,
+  ...domainNodes,
+  ...projectNodes,
+  ...serviceNodes,
+  ...techNodes,
+  ...evidenceNodes,
 ];
+
+/* ── Edges ─────────────────────────────────────────────────────────── */
 
 const E = (from: string, to: string): GraphEdge => ({ from, to });
 
-export const graphEdges: GraphEdge[] = [
-  // Sujith → projects and shared concepts
-  E("sujith", "cryptodrishti"),
-  E("sujith", "surakshascore"),
-  E("sujith", "aether-health"),
-  E("sujith", "surakshascore-mvp"),
-  E("sujith", "cybersecurity"),
-  E("sujith", "ai"),
-  E("sujith", "systems"),
+const edges: GraphEdge[] = [
+  // Sujith sits at the centre of his own domains.
+  ...domains.map((d) => E("sujith", d.id)),
 
-  // CryptoDrishti
-  E("cryptodrishti", "cryptography"),
-  E("cryptodrishti", "quantum-risk"),
-  E("cryptodrishti", "cbom"),
-  E("cryptodrishti", "static-analysis"),
-  E("cryptodrishti", "pqc"),
-  E("cryptodrishti", "python"),
-  E("cryptodrishti", "fastapi"),
-  E("cryptodrishti", "sqlite"),
-  E("cryptodrishti", "cyclonedx"),
-  E("cryptodrishti", "ev-226"),
-  E("cryptodrishti", "ev-ci-py"),
-  E("cbom", "cyclonedx"),
-  E("quantum-risk", "pqc"),
-  E("cryptography", "cybersecurity"),
+  // Each domain reaches the projects and services it genuinely touches.
+  ...domains.flatMap((d) => d.projects.map((slug) => E(d.id, `p-${slug}`))),
+  ...domains.flatMap((d) => d.services.map((svc) => E(d.id, `svc-${svc}`))),
 
-  // SurakshaScore
-  E("surakshascore", "cybersecurity"),
-  E("surakshascore", "privacy"),
-  E("surakshascore", "security-posture"),
-  E("surakshascore", "explainable-scoring"),
-  E("surakshascore", "k-anonymity"),
-  E("surakshascore", "typescript"),
-  E("surakshascore", "react"),
-  E("surakshascore", "vite"),
-  E("surakshascore", "capacitor"),
-  E("surakshascore", "vitest"),
-  E("surakshascore", "ev-107"),
-  E("surakshascore", "ev-isolation"),
+  // The lab's own topology, parent by parent.
+  ...services.filter((s) => s.parent).map((s) => E(`svc-${s.parent}`, `svc-${s.id}`)),
+  E("p-home-lab", "svc-debian"),
 
-  // MVP → SurakshaScore lineage
-  E("surakshascore-mvp", "surakshascore"),
-  E("surakshascore-mvp", "web-crypto"),
-  E("surakshascore-mvp", "supabase"),
-  E("surakshascore-mvp", "electron"),
-  E("surakshascore-mvp", "k-anonymity"),
-  E("surakshascore-mvp", "typescript"),
-  E("surakshascore-mvp", "ev-typecheck"),
+  // Technologies and evidence hang off their project.
+  ...techNodes.filter((t) => t.project).map((t) => E(`p-${t.project}`, t.id)),
+  ...evidenceNodes.filter((n) => n.project).map((n) => E(`p-${n.project}`, n.id)),
 
-  // Aether Health
-  E("aether-health", "ai"),
-  E("aether-health", "health"),
-  E("aether-health", "product"),
-  E("aether-health", "react"),
-  E("aether-health", "typescript"),
-  E("aether-health", "express"),
-  E("aether-health", "gemini"),
-  E("aether-health", "zustand"),
-  E("aether-health", "ev-build"),
+  // The rebuild lineage.
+  E("p-surakshascore-mvp", "p-surakshascore"),
 
-  // Systems
-  E("systems", "debian"),
-  E("debian", "tailscale"),
+  // A few cross-links that are true and make the field feel woven.
+  E("networking", "cybersecurity"),
+  E("linux", "systems"),
+  E("infrastructure", "linux"),
+  E("software", "cybersecurity"),
 ];
 
-/** Which cluster each section brings forward. */
-export const sectionFocus: Record<SectionId, GraphNode["cluster"] | null> = {
-  introduction: null,
-  work: null,
-  evidence: null,
-  about: "core",
-  exploration: null,
-  connect: null,
-};
+/** Deduplicated, and with any edge pointing at a missing node dropped. */
+export const graphEdges: GraphEdge[] = (() => {
+  const ids = new Set(graphNodes.map((n) => n.id));
+  const seen = new Set<string>();
+  const out: GraphEdge[] = [];
+  for (const e of edges) {
+    if (!ids.has(e.from) || !ids.has(e.to) || e.from === e.to) continue;
+    const key = e.from < e.to ? `${e.from}|${e.to}` : `${e.to}|${e.from}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(e);
+  }
+  return out;
+})();
 
 export const graphNodeById = Object.fromEntries(graphNodes.map((n) => [n.id, n])) as Record<
   string,
   GraphNode
 >;
+
+/** Node ids belonging to one domain, including what it connects to. */
+export function domainSubgraph(id: DomainId): Set<string> {
+  const out = new Set<string>([id]);
+  for (const e of graphEdges) {
+    if (e.from === id) out.add(e.to);
+    if (e.to === id) out.add(e.from);
+  }
+  out.delete("sujith");
+  return out;
+}
+
+export const domainIds: DomainId[] = domains.map((d) => d.id);
