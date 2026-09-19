@@ -51,7 +51,14 @@ interface Placed {
   y: number;
 }
 
-export function LabTopology({ compact = false }: { compact?: boolean }) {
+export function LabTopology({
+  compact = false,
+  reveal = 1,
+}: {
+  compact?: boolean;
+  /** 0–1. Below 1 the stack is still assembling, layer by layer. */
+  reveal?: number;
+}) {
   const [selected, setSelected] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const reduced = useReducedMotion();
@@ -60,6 +67,10 @@ export function LabTopology({ compact = false }: { compact?: boolean }) {
   const nodeRefs = useRef(new Map<string, HTMLButtonElement>());
 
   const maxLayer = useMemo(() => Math.max(...services.map((s) => s.layer)), []);
+  /** How far down the stack the assembly has reached. */
+  const front = reveal >= 1 ? maxLayer + 1 : reveal * (maxLayer + 1);
+  const shown = (layer: number) => front >= layer + 0.55;
+  const assembling = reveal < 1;
 
   const placed = useMemo<Record<string, Placed>>(() => {
     const out: Record<string, Placed> = {};
@@ -127,7 +138,7 @@ export function LabTopology({ compact = false }: { compact?: boolean }) {
       </div>
 
       <div className={cn("grid", compact ? "" : "xl:grid-cols-12")}>
-        <div className={cn("relative", compact ? "" : "xl:col-span-7")}>
+        <div className={cn("relative hidden lg:block", compact ? "" : "xl:col-span-7")}>
           <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="presentation">
             {/* Layer rules, so the stack reads as layers */}
             {Array.from({ length: maxLayer + 1 }, (_, l) => {
@@ -155,6 +166,10 @@ export function LabTopology({ compact = false }: { compact?: boolean }) {
               const d = `M${a.x},${a.y + NODE_H / 2} L${a.x},${midY} L${b.x},${midY} L${b.x},${b.y - NODE_H / 2}`;
               const on = related ? related.has(e.from) && related.has(e.to) : false;
               const dim = related && !on;
+              const aSvc = services.find((s) => s.id === e.from);
+              const bSvc = services.find((s) => s.id === e.to);
+              const ready = shown(aSvc?.layer ?? 0) && shown(bSvc?.layer ?? 0);
+              if (!ready) return null;
               return (
                 <g key={`${e.from}-${e.to}`}>
                   <path
@@ -189,6 +204,7 @@ export function LabTopology({ compact = false }: { compact?: boolean }) {
               // The stack settles around whatever is open: related nodes
               // drift a little toward the focus, the rest step back.
               const shift = dim ? 6 : on ? -4 : 0;
+              const arrived = shown(s.layer);
               return (
                 <button
                   key={s.id}
@@ -217,8 +233,12 @@ export function LabTopology({ compact = false }: { compact?: boolean }) {
                     top: `${(p.y / H) * 100}%`,
                     width: `${(NODE_W / W) * 100}%`,
                     height: `${(NODE_H / H) * 100}%`,
-                    transform: `translate(-50%, calc(-50% + ${shift}px))`,
+                    transform: `translate(-50%, calc(-50% + ${arrived ? shift : 14}px))`,
+                    opacity: arrived ? undefined : 0,
+                    pointerEvents: arrived ? undefined : "none",
                   }}
+                  tabIndex={arrived ? undefined : -1}
+                  aria-hidden={arrived ? undefined : true}
                 >
                   <span className="mono truncate text-[11.5px] leading-tight">{s.label}</span>
                   <span
@@ -233,6 +253,57 @@ export function LabTopology({ compact = false }: { compact?: boolean }) {
           </div>
         </div>
 
+        {/* Below the desktop breakpoint the spatial diagram is unreadable,
+            so the same stack is rendered as a vertical chain. Same buttons,
+            same state, same detail panel — only the geometry changes. */}
+        <ol className="lg:hidden">
+          {services.map((s, i) => {
+            const on = selected === s.id || hovered === s.id;
+            const dim = related ? !related.has(s.id) : false;
+            const arrived = shown(s.layer);
+            const last = i === services.length - 1;
+            return (
+              <li key={s.id} className={cn("relative pl-10 pr-4", !arrived && "hidden")}>
+                {/* connector */}
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute left-[22px] top-0 w-px",
+                    last ? "h-1/2" : "h-full",
+                    on ? "bg-signal/60" : "bg-line",
+                  )}
+                />
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute left-[18px] top-1/2 h-2 w-2 -translate-y-1/2 rounded-full border transition-colors",
+                    on ? "border-signal bg-signal" : "border-line-strong bg-base",
+                  )}
+                />
+                <button
+                  type="button"
+                  aria-expanded={selected === s.id}
+                  aria-controls={`${baseId}-detail`}
+                  onClick={() => setSelected((c) => (c === s.id ? null : s.id))}
+                  className={cn(
+                    "flex w-full items-baseline justify-between gap-3 border-b border-line-soft py-3.5 text-left transition-opacity",
+                    dim && "opacity-50",
+                  )}
+                  style={{ paddingLeft: `${s.layer * 8}px` }}
+                >
+                  <span className={cn("text-[15px]", on ? "text-ink" : "text-muted")}>{s.label}</span>
+                  <span
+                    className="mono shrink-0 text-[9px] tracking-[0.14em]"
+                    style={{ color: KIND_COLOR[s.kind] }}
+                  >
+                    {s.tag}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+
         {/* Detail panel */}
         <div
           id={`${baseId}-detail`}
@@ -242,7 +313,40 @@ export function LabTopology({ compact = false }: { compact?: boolean }) {
             compact ? "" : "xl:col-span-5 xl:border-l xl:border-t-0",
           )}
         >
-          {active ? (
+          {assembling ? (
+            <>
+              <span className="label">Assembling the stack</span>
+              <ol className="mt-4 space-y-2">
+                {Array.from({ length: maxLayer + 1 }, (_, l) => {
+                  const first = services.find((s) => s.layer === l);
+                  const done = shown(l);
+                  return (
+                    <li
+                      key={l}
+                      className={cn(
+                        "flex items-center gap-3 text-sm transition-colors duration-300",
+                        done ? "text-ink" : "text-ghost",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-300",
+                          done ? "bg-signal" : "bg-line-strong",
+                        )}
+                        aria-hidden
+                      />
+                      {l === maxLayer
+                        ? "The services people actually use"
+                        : (first?.what.split(".")[0] ?? first?.label)}
+                    </li>
+                  );
+                })}
+              </ol>
+              <p className="mt-5 text-xs leading-relaxed text-ghost">
+                Keep scrolling — the stack finishes assembling, then every node becomes selectable.
+              </p>
+            </>
+          ) : active ? (
             <>
               <div className="flex items-center justify-between gap-3">
                 <span className="label" style={{ color: KIND_COLOR[active.kind] }}>

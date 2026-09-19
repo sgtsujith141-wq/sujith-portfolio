@@ -8,6 +8,7 @@ import { useLivingSystem } from "@/components/canvas/living-system";
 import { Reveal } from "@/components/animations/reveal";
 import { MaskLine } from "@/components/animations/mask-reveal";
 import { Magnetic } from "@/components/animations/magnetic";
+import { Tilt } from "@/components/animations/tilt";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatusPill } from "@/components/ui/status-pill";
 
@@ -67,6 +68,7 @@ export function WorkTeaser() {
         <ul className="mt-14 grid gap-px bg-line-soft lg:grid-cols-3">
           {featured.map((p, i) => (
             <Reveal as="li" key={p.slug} delay={i * 0.07} className="h-full bg-base">
+              <Tilt className="h-full">
               <div
                 className="h-full"
                 onMouseEnter={() => setHover(`p-${p.slug}`)}
@@ -99,6 +101,7 @@ export function WorkTeaser() {
                   </div>
                 </Link>
               </div>
+              </Tilt>
             </Reveal>
           ))}
         </ul>

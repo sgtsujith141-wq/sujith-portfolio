@@ -1,7 +1,11 @@
+"use client";
+
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { homelab } from "@/content/homelab";
 import { LabTopology } from "@/components/homelab/topology";
+import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { Reveal } from "@/components/animations/reveal";
 import { MaskLine } from "@/components/animations/mask-reveal";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -20,9 +24,48 @@ export function HomeLabSection() {
   /* No stage here: the diagram below is full-width and opaque, so the
    * canvas holds its own copy of the topology in the band beside the
    * heading rather than hiding behind the card. */
+  const scope = useRef<HTMLElement>(null);
+  const [reveal, setReveal] = useState(1);
+  const revealRef = useRef(setReveal);
+
+  /* The one pinned scene on the site. The diagram holds still for a
+   * short scroll while the stack assembles from the home network down
+   * to the services, then the pin releases and everything below carries
+   * on normally. Desktop only, and reduced motion skips it entirely —
+   * in both cases the stack simply starts complete. */
+  useGSAP(
+    () => {
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduced) {
+        revealRef.current(1);
+        return;
+      }
+      const mm = gsap.matchMedia();
+      mm.add("(min-width: 1024px)", () => {
+        revealRef.current(0);
+        ScrollTrigger.create({
+          trigger: "[data-lab-stage]",
+          start: "top top+=88",
+          end: "+=90%",
+          pin: true,
+          scrub: 0.5,
+          anticipatePin: 1,
+          onUpdate: (self) => revealRef.current(self.progress),
+          onLeave: () => revealRef.current(1),
+          onLeaveBack: () => revealRef.current(0),
+        });
+      });
+      mm.add("(max-width: 1023px)", () => revealRef.current(1));
+      ScrollTrigger.refresh();
+      document.fonts?.ready.then(() => ScrollTrigger.refresh());
+    },
+    { scope },
+  );
+
   return (
     <section
       id="homelab"
+      ref={scope}
       aria-labelledby="homelab-title"
       className="relative px-6 py-28 lg:px-12 lg:py-40"
     >
@@ -42,9 +85,9 @@ export function HomeLabSection() {
 
         {/* The diagram leads and takes the full width — it needs the room,
             and it is the point of the section. */}
-        <div className="mt-14">
+        <div data-lab-stage className="mt-14">
           <Reveal amount={0.08}>
-            <LabTopology />
+            <LabTopology reveal={reveal} />
           </Reveal>
         </div>
 
