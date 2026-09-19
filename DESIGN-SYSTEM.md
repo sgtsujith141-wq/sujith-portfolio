@@ -57,9 +57,10 @@ Connect headline `clamp(2.6rem, 8.4vw, 7.6rem)`.
 
 | Element | Behaviour |
 |---|---|
-| Opening | CSS-driven `[data-enter]` timeline: ignite 200ms → name letters from 700ms (55ms stagger) → statement 1300ms → actions 1800ms → navigation 1900ms → scroll cue 2300ms. Never blocks scrolling; replays every load; no storage. |
+| Opening | CSS-driven `[data-enter]` timeline: ignite 200ms → three headline lines rise from behind their masks at 420/560/700ms → name plate and statement 1100ms → actions 1450ms → navigation 1600ms → interests rail and scroll cue 1850ms. Never blocks scrolling; replays every load; no storage. |
 | Reveal | `Reveal` — 18px rise + fade over 0.9s with `[0.16, 1, 0.3, 1]`, once per element. |
-| Pinned scene | One only: the Selected Work intro (`+=110%`, scrub 0.6). |
+| Pinned scene | One only: the home lab assembling its stack (`+=90%`, scrub 0.5, desktop only). |
+| Tilt | ≤ 3° perspective with a pointer-tracked sheen, fine pointers only. |
 | Magnetic | ≤ 6px, fine pointers only. |
 | Underlines | Background-size transition, 420ms. |
 | Reduced motion | Global: durations to 0.001ms; the canvas draws a static frame per state change; the opening renders finished. |
@@ -75,6 +76,25 @@ narrow screens inside a case study.
 ## Components
 
 `Action` (primary / secondary / ghost) · `SectionHeader` · `StatusPill` (accent /
-signal / warn / ok / muted) · `Reveal` · `SplitText` · `Magnetic` · `Gallery` ·
-`SignalsModel` · `CryptoVisual` · `EvolutionTimeline` · `AetherShowcase` /
-`AetherFacts` · `ArchitectureExplorer` · `DeepDive` · `NavRail` · `MobileNav`.
+signal / warn / ok / muted) · `Reveal` (renders as `div` or `li`) · `MaskLine` ·
+`Wipe` · `Parallax` · `Recede` · `DrawPath` · `SplitText` · `Magnetic` · `Tilt` ·
+`PersonalNetwork` · `LabTopology` · `Gallery` · `SignalsModel` · `CryptoVisual` ·
+`EvolutionTimeline` · `AetherShowcase` / `AetherFacts` · `ArchitectureExplorer` ·
+`DeepDive` · `NavRail` · `MobileNav` · `WorkHeader` · `WorkIndex` · `CaseStudyView`.
+
+## The light field
+
+A single composited DOM layer, not canvas pixels: a 120vmax radial gradient positioned
+by `transform` and tinted through `--light-rgb`, which the engine sets per section as
+the palette shifts from electric blue toward cyan. Only transform and opacity change,
+so it never leaves the compositor. Dropped on low-power devices; static under reduced
+motion.
+
+## Scaling down
+
+| Condition | What changes |
+|---|---|
+| Coarse pointer | Device pixel ratio capped at 1.5, ambient count halved, the second drifting light dropped, no magnetic or tilt |
+| Low power (≤4 cores or ≤4GB) | Ambient count reduced again, signal cap lowered, light field off |
+| Below `lg` | The lab's spatial diagram becomes a vertical chain; no pinned scene; node labels in the field are suppressed inside case studies |
+| Reduced motion | One static canvas frame per state change, entrance rendered finished, no pin, no edge traffic |

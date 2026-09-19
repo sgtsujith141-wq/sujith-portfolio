@@ -70,6 +70,38 @@ Each local clone was fetched and confirmed equal to `origin/main`. No repository
 - AI features **not exercised** (need a Gemini key) — stated on the site.
 - Screenshots: four files in `docs/images/` (guest mode, seeded demo data).
 
+## Identity model (2026-09-19)
+
+| Fact | Source |
+|---|---|
+| The seven domains: networking, cybersecurity, computer systems, Linux, servers and self-hosting, AI, building useful software | Stated by Sujith in the v2 brief as his actual interests |
+| Headline direction "exploring networks, securing systems, building things that matter" | Proposed by Sujith in the v2 brief |
+| Skill levels ("Hands on, daily", "Fundamentals", …) | Deliberately conservative wordings; no certification or professional experience is claimed anywhere |
+| Every `evidence` line under a domain | Points at a home-lab service or a repository, both listed below |
+
+**Explicitly corrected in v2 at Sujith's instruction:** cryptography is the subject of a
+project he built, not his personal identity, and the hero no longer implies otherwise.
+Vitest, Vite and Capacitor are project dependencies and no longer appear as personal
+skills.
+
+## Home lab (2026-09-19)
+
+| Fact | Source |
+|---|---|
+| Debian 12 (Bookworm) host, headless, installed from scratch | Described by Sujith |
+| CasaOS as the service layer | Described by Sujith |
+| Jellyfin, network file storage, a Minecraft server | Described by Sujith |
+| Tailscale (WireGuard) for remote access, no ports forwarded | Described by Sujith |
+| One node | Described by Sujith |
+| What he configured and what each piece taught him | His own words, captured in an earlier session and carried into `content/homelab.ts` |
+
+**Deliberately absent**, because inventing them would be a lie about someone's real
+infrastructure: uptime, hardware specifications, bandwidth, CPU or memory figures, IP
+addresses, hostnames, firewall rules, and any claim that the setup is secure. The
+topology diagram carries a permanent "Illustrative — no live metrics" label, and the
+case study's verification log states that the facts were supplied by the machine's
+operator and not measured remotely.
+
 ## Assets
 
 - Screenshots: copied from the repositories above; the repositories are Sujith's own work.
