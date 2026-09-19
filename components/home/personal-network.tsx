@@ -267,7 +267,7 @@ export function PersonalNetwork() {
         <p className="display mt-5 text-2xl text-ink lg:text-[1.75rem]">{active.summary}</p>
         <p className="mt-5 text-[15px] leading-relaxed text-muted">{active.body}</p>
 
-        <h4 className="label mt-8">Where this actually shows up</h4>
+        <h3 className="label mt-8">Where this actually shows up</h3>
         <ul className="mt-4 space-y-2.5">
           {active.evidence.map((e) => (
             <li key={e} className="flex gap-3 text-sm leading-relaxed text-muted">
@@ -279,7 +279,7 @@ export function PersonalNetwork() {
 
         {active.services.length ? (
           <>
-            <h4 className="label mt-8">In the home lab</h4>
+            <h3 className="label mt-8">In the home lab</h3>
             <ul className="mt-3 flex flex-wrap gap-2">
               {active.services.map((id) => {
                 const s = serviceById[id];
@@ -302,7 +302,7 @@ export function PersonalNetwork() {
 
         {active.projects.length ? (
           <>
-            <h4 className="label mt-8">In my work</h4>
+            <h3 className="label mt-8">In my work</h3>
             <ul className="mt-3 flex flex-wrap gap-2">
               {active.projects.map((slug) => {
                 const p = projectBySlug[slug];

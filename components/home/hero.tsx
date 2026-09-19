@@ -39,7 +39,6 @@ export function Hero() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : 140]);
   const opacity = useTransform(scrollYProgress, [0, 0.75], [1, reduced ? 1 : 0]);
-  const blur = useTransform(scrollYProgress, [0, 1], ["blur(0px)", reduced ? "blur(0px)" : "blur(6px)"]);
 
   useEffect(() => {
     const t = window.setTimeout(ignite, 200);
@@ -55,7 +54,9 @@ export function Hero() {
       aria-labelledby="hero-title"
       className="relative flex min-h-dvh flex-col justify-center px-6 pb-28 pt-28 lg:px-12 lg:pt-24"
     >
-      <motion.div style={{ y, opacity, filter: blur }} className="mx-auto w-full max-w-6xl">
+      {/* Translate and opacity only. A scale or blur here would force the
+          whole hero to re-rasterise on every scroll frame. */}
+      <motion.div style={{ y, opacity }} className="mx-auto w-full max-w-6xl">
         <p data-enter="rise" style={delay(300)} className="label flex items-center gap-3">
           <span className="text-accent">01</span>
           <span aria-hidden className="h-px w-6 bg-line-strong" />

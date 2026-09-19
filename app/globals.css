@@ -239,6 +239,28 @@ html[data-intro="pending"] [data-enter="line"] {
   transition-delay: var(--enter-delay, 0ms);
 }
 
+/* The light field: one composited layer, no canvas pixels. Its colour
+ * comes from --light-rgb, which the engine sets per section, and it is
+ * moved only by transform so it never leaves the compositor. */
+.light-field {
+  width: 120vmax;
+  height: 120vmax;
+  background: radial-gradient(
+    closest-side,
+    rgba(var(--light-rgb, 79, 124, 255), 0.1),
+    rgba(var(--light-rgb, 79, 124, 255), 0.04) 45%,
+    transparent 72%
+  );
+  will-change: transform, opacity;
+  transition: opacity 600ms var(--ease-out-expo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .light-field {
+    transition: none;
+  }
+}
+
 @keyframes pulse-dot {
   0%,
   100% {

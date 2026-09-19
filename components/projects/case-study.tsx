@@ -135,7 +135,7 @@ export function CaseStudy({
               {project.howItWorks.map((s, i) => (
                 <li key={s.title} className="bg-base p-5">
                   <p className="mono text-[10px] tracking-[0.2em] text-ghost">{String(i + 1).padStart(2, "0")}</p>
-                  <h4 className="mt-2 text-[15px] text-ink">{s.title}</h4>
+                  <h3 className="mt-2 text-[15px] text-ink">{s.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted">{s.detail}</p>
                 </li>
               ))}
@@ -223,7 +223,7 @@ export function CaseStudy({
 function Block({ title, children, wide }: { title: string; children: ReactNode; wide?: boolean }) {
   return (
     <Reveal className="mt-12">
-      <h4 className="label">{title}</h4>
+      <h2 className="label">{title}</h2>
       <div className={cn("mt-4", wide ? "" : "max-w-2xl space-y-4 text-[15px] leading-relaxed text-muted")}>{children}</div>
     </Reveal>
   );

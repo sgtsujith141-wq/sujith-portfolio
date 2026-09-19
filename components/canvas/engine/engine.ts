@@ -179,6 +179,11 @@ export class LivingSystemEngine {
   private ignited = false;
   private ignitionStart = 0;
 
+  /** Cached once per resize: reading it per frame forces a style recalc,
+   *  which on a page with pinned and sticky elements costs more than the
+   *  entire rest of the frame. */
+  private labelFont = "500 10px ui-monospace, monospace";
+
   private raf = 0;
   private running = false;
   private visible = true;
@@ -302,6 +307,9 @@ export class LivingSystemEngine {
     if (!this.light.x) {
       this.light = { x: this.w * 0.5, y: this.h * 0.4 };
     }
+
+    const mono = getComputedStyle(this.canvas).getPropertyValue("--font-geist-mono").trim();
+    this.labelFont = `500 10px ${mono || "ui-monospace, monospace"}`;
 
     const want = this.ambientCount();
     if (this.ambient.length !== want) this.buildAmbient(want);
@@ -624,6 +632,17 @@ export class LivingSystemEngine {
     return mix(RGB.accent, RGB.signal, Math.min(1, this.mood));
   }
 
+  /** Where the light should be and what colour, for the composited layer. */
+  readLight() {
+    const t = this.tint();
+    return {
+      x: this.light.x,
+      y: this.light.y,
+      rgb: `${t[0]},${t[1]},${t[2]}`,
+      intensity: (0.06 + this.mood * 0.05) * this.ignition,
+    };
+  }
+
   private draw() {
     const ctx = this.ctx;
     const z = this.cam.zoom;
@@ -639,26 +658,9 @@ export class LivingSystemEngine {
     const tint = this.tint();
     const par = (depth: number) => ({ dx: -px * depth * 34, dy: -py * depth * 34 });
 
-    /* 1 — light field. Two soft lights: one trailing the pointer, one
-     * drifting on its own. Skipped entirely on low-power devices. */
-    if (!this.opts.lowPower && this.ignition > 0.1) {
-      const strength = 0.06 + this.mood * 0.05;
-      const r1 = Math.max(this.w, this.h) * 0.42;
-      const g1 = ctx.createRadialGradient(this.light.x, this.light.y, 0, this.light.x, this.light.y, r1);
-      g1.addColorStop(0, rgba(tint, strength * this.ignition));
-      g1.addColorStop(1, rgba(tint, 0));
-      ctx.fillStyle = g1;
-      ctx.fillRect(0, 0, this.w, this.h);
-
-      const dx = this.w * (0.5 + Math.cos(this.time * 0.0016) * 0.36);
-      const dy = this.h * (0.5 + Math.sin(this.time * 0.0012) * 0.34);
-      const r2 = Math.max(this.w, this.h) * 0.34;
-      const g2 = ctx.createRadialGradient(dx, dy, 0, dx, dy, r2);
-      g2.addColorStop(0, rgba(RGB.violet, 0.035 * this.ignition));
-      g2.addColorStop(1, rgba(RGB.violet, 0));
-      ctx.fillStyle = g2;
-      ctx.fillRect(0, 0, this.w, this.h);
-    }
+    /* 1 — the light field is no longer drawn here. It is a composited
+     * DOM layer in the provider, driven by CSS custom properties this
+     * engine publishes below, so it costs the canvas nothing. */
 
     /* 2 — ambient lattice. */
     const linkDist = Math.min(this.w, this.h) * (this.routed > 0.5 ? 0.13 : 0.105);
@@ -758,8 +760,7 @@ export class LivingSystemEngine {
     }
 
     /* 5 — nodes. Radius and haze scale with depth. */
-    const mono = getComputedStyle(this.canvas).getPropertyValue("--font-geist-mono").trim();
-    ctx.font = `500 10px ${mono || "ui-monospace, monospace"}`;
+    ctx.font = this.labelFont;
     ctx.textBaseline = "middle";
     for (const n of this.nodes) {
       if (n.a < 0.02) continue;

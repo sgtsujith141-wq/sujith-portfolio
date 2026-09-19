@@ -72,6 +72,7 @@ function detectLowPower() {
 
 export function LivingSystem({ children }: { children: ReactNode }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lightRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<LivingSystemEngine | null>(null);
   const [ready, setReady] = useState(false);
   const pendingIgnite = useRef(false);
@@ -188,6 +189,26 @@ export function LivingSystem({ children }: { children: ReactNode }) {
         const onPointerLeave = () => engine.setPointer(0, 0, false);
         const onVisibility = () => engine.setVisible(!document.hidden);
 
+        /* The light field is a composited DOM layer rather than canvas
+         * pixels. Only transform and opacity are touched, so it stays on
+         * the compositor and the main thread does no painting for it. */
+        let lightRaf = 0;
+        const paintLight = () => {
+          const el = lightRef.current;
+          if (el) {
+            const l = engine.readLight();
+            el.style.transform = `translate3d(${Math.round(l.x)}px, ${Math.round(l.y)}px, 0) translate(-50%, -50%)`;
+            el.style.setProperty("--light-rgb", l.rgb);
+            el.style.opacity = String(Math.min(1, l.intensity * 9));
+          }
+          lightRaf = requestAnimationFrame(paintLight);
+        };
+        if (!reduced) lightRaf = requestAnimationFrame(paintLight);
+        else {
+          const el = lightRef.current;
+          if (el) el.style.opacity = "0.45";
+        }
+
         measure();
         update();
         window.addEventListener("scroll", onScroll, { passive: true });
@@ -197,6 +218,7 @@ export function LivingSystem({ children }: { children: ReactNode }) {
 
         cleanup = () => {
           requestUpdate.current = noop;
+          cancelAnimationFrame(lightRaf);
           clearTimeout(igniteTimer);
           cancelAnimationFrame(scrollRaf);
           cancelAnimationFrame(pointerRaf);
@@ -260,6 +282,15 @@ export function LivingSystem({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider value={api}>
+      {/* The room's light. A single composited layer that follows the
+          pointer and takes the active section's tint. */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div
+          ref={lightRef}
+          className="light-field absolute left-0 top-0 opacity-0"
+          style={{ transform: "translate3d(50vw, 40vh, 0) translate(-50%, -50%)" }}
+        />
+      </div>
       <canvas
         ref={canvasRef}
         aria-hidden="true"

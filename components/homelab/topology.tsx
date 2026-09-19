@@ -363,10 +363,10 @@ export function LabTopology({
               <p className="display mt-3 text-xl text-ink">{active.label}</p>
               <p className="mt-3 text-sm leading-relaxed text-muted">{active.what}</p>
 
-              <h5 className="label mt-6">Why it is there</h5>
+              <h3 className="label mt-6">Why it is there</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">{active.purpose}</p>
 
-              <h5 className="label mt-6">What I set up</h5>
+              <h3 className="label mt-6">What I set up</h3>
               <ul className="mt-2 space-y-2">
                 {active.configured.map((c) => (
                   <li key={c} className="flex gap-2.5 text-sm leading-relaxed text-muted">
@@ -376,7 +376,7 @@ export function LabTopology({
                 ))}
               </ul>
 
-              <h5 className="label mt-6">What it taught me</h5>
+              <h3 className="label mt-6">What it taught me</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">{active.learned}</p>
 
               <ul className="mt-6 flex flex-wrap gap-2">

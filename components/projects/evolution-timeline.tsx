@@ -30,7 +30,7 @@ export function EvolutionTimeline() {
               {i < evolution.length - 1 ? (
                 <span aria-hidden className="absolute right-0 top-[31px] hidden h-px w-6 translate-x-full bg-line-strong lg:block" />
               ) : null}
-              <h4 className="display mt-5 text-xl text-ink">{stage.title}</h4>
+              <h3 className="display mt-5 text-xl text-ink">{stage.title}</h3>
               <p className="mt-3 text-sm leading-relaxed text-muted">{stage.detail}</p>
               <a
                 href={`${GH}/${stage.repo}`}
