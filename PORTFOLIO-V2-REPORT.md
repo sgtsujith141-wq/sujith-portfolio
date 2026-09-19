@@ -233,7 +233,44 @@ passes the gates on its own.
 
 ## 9. Deployment status
 
-See the end of this file — filled in only after the deployment was observed to succeed.
+**Live at https://sujith-portfolio-two.vercel.app**, verified after the fact rather than
+assumed.
+
+- Branch `feat/immersive-portfolio-v2` pushed; remote head confirmed equal to local.
+- Pull request [#1](https://github.com/sgtsujith141-wq/sujith-portfolio/pull/1) opened
+  into `main`. Both Vercel checks reported **pass** on the preview build. The preview URL
+  itself sits behind Vercel deployment protection and returns a login page to an
+  unauthenticated client, so it could not be browsed; the same commit was verified
+  exhaustively against a local production build.
+- Merged with a **merge commit** (`bde8e48`), not a squash or rebase, so every commit on
+  the branch survives in `main`. No history rewritten, no force-push, and the branch
+  still exists locally and on the remote.
+- Vercel's GitHub integration built `bde8e48` and reported **Production · success**.
+
+Verified on the live site afterwards:
+
+| Check | Result |
+|---|---|
+| Title | "Sujith C — Networks, Systems & Self-Hosting" |
+| All seven routes | 200 |
+| Sitemap | lists the home page, `/work` and all five case studies |
+| Resume, screenshots, robots, social image | 200 |
+| Console errors across 7 routes × 2 widths | none |
+| Links | 16 destinations, all resolve |
+| Horizontal overflow | none, in 14 route/width combinations |
+| Accessibility checks | clean on every route |
+| Keyboard, reduced motion | as verified locally |
+
+One thing worth stating plainly: a grep of the live home page finds the strings "Vitest"
+and "Capacitor". Both occurrences are the sentence that exists precisely to keep them out
+of his identity — *"Frameworks and libraries … belong to the repositories that use them.
+They are listed inside each case study, not here."* They appear nowhere else on the home
+page.
+
+Frame-rate figures differ slightly between environments and runs: two consecutive local
+runs at 2x device pixel ratio held 60–61 fps across hero, technical world and home lab,
+while a run against production on a loaded machine sampled 52 fps at the hero and 40 fps
+in the home lab. Both are reported rather than the better one.
 
 ## 10. Remaining limitations
 
