@@ -1,6 +1,5 @@
 import { graphNodes, graphEdges, domainSubgraph, type GraphNode } from "@/content/graph";
-import { services } from "@/content/homelab";
-import type { DomainId, ProjectSlug, SectionId } from "@/lib/types";
+import type { ProjectSlug, SectionId } from "@/lib/types";
 import { seeded } from "@/lib/utils";
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -24,7 +23,7 @@ import { seeded } from "@/lib/utils";
  *    work-route    the /work page's own standing formation
  * ══════════════════════════════════════════════════════════════════════ */
 
-export type FormationName = SectionId | "work-route";
+export type FormationName = SectionId | "work-route" | "boot" | "emerge";
 
 export interface Target {
   x: number;
@@ -69,7 +68,7 @@ export interface FormationInput {
   /** Progress of a pinned scene, when one is driving. */
   phase: number;
   focus: ProjectSlug | null;
-  domain: DomainId | null;
+  domain: string | null;
   hover: string | null;
   stage: Stage | null;
 }
@@ -83,6 +82,8 @@ export interface FormationResult {
   flow: number;
   /** 0 = straight edges, 1 = orthogonal routed edges. */
   routed: number;
+  /** When true, pointer proximity may light a node but never name it. */
+  quiet?: boolean;
 }
 
 const TAU = Math.PI * 2;
@@ -163,6 +164,50 @@ function ring(
   });
 }
 
+/* ── The opening sequence ──────────────────────────────────────────────
+ *
+ *  Restored from the original intro: the field starts collapsed at the
+ *  centre behind the name, then condenses out of it as a golden-angle
+ *  spiral. When the sequence releases the field, the normal section
+ *  formation takes over and the same nodes are thrown outward to fill
+ *  the viewport — which is what makes the handoff read as one system
+ *  expanding rather than one screen replacing another.
+ * ------------------------------------------------------------------- */
+
+/** Golden angle — an even spread with no clumping. */
+const GOLDEN = 2.399963229728653;
+
+function boot(v: Viewport): FormationResult {
+  const t: Record<string, Target> = {};
+  const cx = v.w / 2;
+  const cy = v.h / 2;
+  for (const n of graphNodes) {
+    t[n.id] = { x: cx, y: cy, a: 0, la: 0, lit: 0, z: 0.5 };
+  }
+  return { t, cam: { zoom: 1, x: 0, y: 0, tilt: 0 }, mood: 0.1, flow: 0, routed: 0 };
+}
+
+function emerge(v: Viewport): FormationResult {
+  const t: Record<string, Target> = {};
+  const cx = v.w / 2;
+  const cy = v.h / 2;
+  const aspect = v.w / Math.max(1, v.h);
+  const n = graphNodes.length;
+  graphNodes.forEach((node, i) => {
+    const ang = i * GOLDEN;
+    const r = (0.04 + (i / n) * 0.16 + seeded(i * 3.1 + 5) * 0.02) * Math.min(v.w, v.h) * 2;
+    t[node.id] = {
+      x: cx + Math.cos(ang) * r,
+      y: cy + (Math.sin(ang) * r) / aspect,
+      a: 0.72,
+      la: 0,
+      lit: 0.12,
+      z: 0.45 + seeded(i * 7.7 + 2) * 0.4,
+    };
+  });
+  return { t, cam: { zoom: 1, x: 0, y: 0, tilt: 0 }, mood: 0.2, flow: 0.4, routed: 0 };
+}
+
 /* ── 01 Introduction ───────────────────────────────────────────────── */
 
 function introduction(v: Viewport, p: number): FormationResult {
@@ -224,54 +269,9 @@ function introduction(v: Viewport, p: number): FormationResult {
   };
 }
 
-/* ── 02 About ──────────────────────────────────────────────────────── */
+/* ── 02 About — his interests, in orbit ─────────────────────────────── */
 
-function about(v: Viewport, p: number): FormationResult {
-  const t: Record<string, Target> = {};
-  // Structured: a spine with the domains ranked beside it, rather than
-  // an orbit. The same nodes, organised.
-  const cx = v.narrow ? v.w * 0.5 : v.w * 0.78;
-  const top = v.h * (v.narrow ? 0.06 : 0.16);
-  const gap = v.h * (v.narrow ? 0.03 : 0.1);
-
-  t.sujith = { x: cx, y: top - gap * 0.9, a: 0.95, la: 0, lit: 0.7, z: 1 };
-
-  domainNodes.forEach((n, i) => {
-    const lane = i % 2 === 0 ? -1 : 1;
-    t[n.id] = {
-      x: cx + lane * v.w * (v.narrow ? 0.18 : 0.07),
-      y: top + i * gap,
-      a: 0.8,
-      la: v.narrow ? 0 : 0.6,
-      lit: 0.32,
-      z: 0.78 + (i % 3) * 0.07,
-    };
-  });
-
-  projectNodes.forEach((n, i) => {
-    t[n.id] = {
-      x: cx + (i % 2 === 0 ? -1 : 1) * v.w * 0.17,
-      y: top + i * gap * 1.15 + gap * 0.5,
-      a: 0.3,
-      la: 0,
-      lit: 0,
-      z: 0.4,
-    };
-  });
-
-  scatterRest(t, v, 0.18);
-  return {
-    t,
-    cam: { zoom: 1.02, x: 0, y: (0.5 - p) * v.h * 0.05, tilt: 0 },
-    mood: 0.3,
-    flow: 0.7,
-    routed: 0,
-  };
-}
-
-/* ── 03 Technical world — the signature formation ──────────────────── */
-
-function network(v: Viewport, p: number, domain: DomainId | null, stage: Stage | null): FormationResult {
+function interestsField(v: Viewport, p: number, domain: string | null, stage: Stage | null): FormationResult {
   const t: Record<string, Target> = {};
   const cx = stage ? stage.x : v.narrow ? v.w * 0.5 : v.w * 0.72;
   const cy = stage ? stage.y : v.h * 0.5;
@@ -336,81 +336,59 @@ function network(v: Viewport, p: number, domain: DomainId | null, stage: Stage |
   };
 }
 
-/* ── 04 Home lab — the field becomes infrastructure ────────────────── */
+/* ── 03 Machines — atmosphere, not a second diagram ──────────────────
+ *
+ *  The section already contains an illustration of the machine. Drawing
+ *  a labelled topology behind it would be two diagrams competing, which
+ *  is exactly the failure this section is meant to avoid. The field here
+ *  is depth: the lab's own nodes, unlabelled, drifting in soft layers
+ *  behind the copy.
+ * ------------------------------------------------------------------- */
 
-function homelab(v: Viewport, p: number, stage: Stage | null): FormationResult {
+function machines(v: Viewport, p: number, stage: Stage | null): FormationResult {
   const t: Record<string, Target> = {};
-  const maxLayer = Math.max(...services.map((s) => s.layer));
+  const cx = stage ? stage.x : v.narrow ? v.w * 0.5 : v.w * 0.7;
+  const cy = stage ? stage.y : v.h * 0.5;
+  const r = Math.min(v.w, v.h) * (v.narrow ? 0.3 : 0.34);
 
-  // Occupy the measured diagram area when the page offers one, so the
-  // canvas topology sits exactly behind the interactive one.
-  const box = stage
-    ? { x0: stage.x - stage.w / 2, y0: stage.y - stage.h / 2, w: stage.w, h: stage.h }
-    : {
-        // The band beside the section heading, clear of the rail.
-        x0: v.narrow ? v.w * 0.1 : v.w * 0.58,
-        y0: v.h * (v.narrow ? 0.04 : 0.1),
-        w: v.narrow ? v.w * 0.8 : v.w * 0.26,
-        h: v.h * (v.narrow ? 0.24 : 0.52),
-      };
-
-  services.forEach((s) => {
-    const layerT = maxLayer === 0 ? 0 : s.layer / maxLayer;
-    t[`svc-${s.id}`] = {
-      x: box.x0 + box.w * s.x,
-      // Ease the layers apart so the top of the stack has room.
-      y: box.y0 + box.h * (0.06 + layerT * 0.88),
-      // Restrained on purpose: a structural hint beside the copy, never
-      // a second diagram competing with the interactive one below.
-      a: 0.62,
-      la: v.narrow ? 0 : 0.55,
-      lit: 0.18 + (s.kind === "host" || s.kind === "platform" ? 0.1 : 0),
-      z: 0.9,
-    };
-  });
-
-  // The lab project node anchors the stack from above.
-  t["p-home-lab"] = {
-    x: box.x0 + box.w * 0.5,
-    y: box.y0 - box.h * 0.08,
-    a: 0.5,
-    la: 0,
-    lit: 0.25,
-    z: 0.85,
-  };
-
-  // Domains all but vanish here — their long edges would otherwise rake
-  // across the reading column on the way to the services.
-  domainNodes.forEach((n, i) => {
+  // The lab's pieces gather loosely around the illustration, unnamed.
+  const lab = graphNodes.filter((n) => n.project === "home-lab");
+  lab.forEach((n, i) => {
+    const ang = i * GOLDEN + p * 0.5;
+    const rr = r * (0.55 + seeded(i * 5.3 + 2) * 0.8);
     t[n.id] = {
-      x: v.narrow ? v.w * (0.12 + i * 0.13) : v.w * 0.5,
-      y: v.narrow ? v.h * 0.96 : v.h * (0.04 + i * 0.03),
-      a: 0.07,
+      x: cx + Math.cos(ang) * rr * 1.2,
+      y: cy + Math.sin(ang) * rr * 0.75,
+      a: 0.34,
       la: 0,
-      lit: 0,
-      z: 0.2,
+      lit: 0.14,
+      z: 0.4 + seeded(i * 9.1 + 4) * 0.5,
     };
   });
 
-  scatterRest(t, v, 0.08, 40);
+  t.sujith = { x: cx, y: cy, a: 0.18, la: 0, lit: 0.08, z: 0.5 };
+  scatterRest(t, v, 0.16, 40);
+
   return {
     t,
-    cam: { zoom: 1, x: 0, y: (0.5 - p) * v.h * 0.03, tilt: 0 },
-    mood: 0.7,
-    flow: 2.2,
-    routed: 1,
+    cam: { zoom: 1, x: 0, y: (0.5 - p) * v.h * 0.04, tilt: 0 },
+    mood: 0.45,
+    flow: 0.9,
+    routed: 0,
+    // The section already has an illustration; the field must not start
+    // naming machines over the top of it.
+    quiet: true,
   };
 }
 
-/* ── 05 Exploring ──────────────────────────────────────────────────── */
+/* ── 04 Now ─────────────────────────────────────────────────────────── */
 
-function exploring(v: Viewport, p: number): FormationResult {
+function nowField(v: Viewport, p: number): FormationResult {
   const t: Record<string, Target> = {};
-  const groups: Array<[DomainId, number, number]> = [
-    ["networking", 0.74, 0.16],
-    ["cybersecurity", 0.86, 0.42],
-    ["ai", 0.7, 0.66],
-    ["infrastructure", 0.88, 0.86],
+  const groups: Array<[string, number, number]> = [
+    ["ai", 0.74, 0.18],
+    ["tinkering", 0.87, 0.44],
+    ["cybersecurity", 0.7, 0.7],
   ];
   const R = Math.min(v.w, v.h) * 0.09;
 
@@ -439,6 +417,7 @@ function exploring(v: Viewport, p: number): FormationResult {
     mood: 0.4,
     flow: 1,
     routed: 0,
+    quiet: true,
   };
 }
 
@@ -601,16 +580,18 @@ function workRoute(v: Viewport, p: number, focus: ProjectSlug | null, stage: Sta
 export function formation(v: Viewport, input: FormationInput): FormationResult {
   const p = Math.max(0, Math.min(1, input.progress));
   switch (input.name) {
+    case "boot":
+      return boot(v);
+    case "emerge":
+      return emerge(v);
     case "introduction":
       return introduction(v, p);
     case "about":
-      return about(v, p);
-    case "network":
-      return network(v, p, input.domain, input.stage);
-    case "homelab":
-      return homelab(v, p, input.stage);
-    case "exploring":
-      return exploring(v, p);
+      return interestsField(v, p, input.domain, input.stage);
+    case "machines":
+      return machines(v, p, input.stage);
+    case "now":
+      return nowField(v, p);
     case "work":
       return work(v, Math.max(p, input.phase), input.stage);
     case "connect":
@@ -630,9 +611,26 @@ export function ambientTargets(
   const out: Array<{ x: number; y: number; a: number; z: number }> = [];
   const cols = Math.max(4, Math.round(Math.sqrt(count * (v.w / v.h))));
   const rows = Math.max(3, Math.ceil(count / cols));
+  if (name === "boot" || name === "emerge") {
+    const cx = v.w / 2;
+    const cy = v.h / 2;
+    const spread = name === "emerge" ? Math.min(v.w, v.h) * 0.22 : 0;
+    for (let i = 0; i < count; i++) {
+      const ang = i * GOLDEN;
+      const r = spread * (0.2 + (i / count) * 0.9);
+      out.push({
+        x: cx + Math.cos(ang) * r,
+        y: cy + Math.sin(ang) * r * 0.7,
+        a: name === "emerge" ? 0.3 : 0,
+        z: 0.12 + seeded(i * 11.9 + 4) * 0.42,
+      });
+    }
+    return out;
+  }
+
   const converge = name === "connect" ? progress : 0;
   // The lab formation snaps the ambient field onto a rack-like grid.
-  const lattice = name === "homelab" ? 1 : name === "about" ? 0.55 : 0;
+  const lattice = name === "about" ? 0.4 : 0;
 
   for (let i = 0; i < count; i++) {
     const col = i % cols;

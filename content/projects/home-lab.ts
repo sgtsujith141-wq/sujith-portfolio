@@ -7,7 +7,7 @@ import { homelab, services } from "@/content/homelab";
 
 export const homeLab: Project = {
   slug: "home-lab",
-  index: "01",
+  index: "02",
   name: "Home Lab",
   tagline: homelab.summary,
   category: "Infrastructure & self-hosting",

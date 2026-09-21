@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { profile } from "@/content/profile";
+import { profile } from "@/content/personal";
 import { projects } from "@/content/projects";
 
 const origin = profile.meta.url.replace(/\/$/, "");

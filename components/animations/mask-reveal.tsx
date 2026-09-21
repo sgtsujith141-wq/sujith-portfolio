@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { DUR, EASE_IN_OUT, EASE_OUT } from "@/lib/motion";
 
 /* ══════════════════════════════════════════════════════════════════════
  *  MASK REVEAL
@@ -25,7 +26,7 @@ const variants = {
 export function MaskLine({
   children,
   delay = 0,
-  duration = 1,
+  duration = DUR.reveal,
   className,
   inView = true,
 }: {
@@ -46,7 +47,7 @@ export function MaskLine({
       <motion.span
         className="block"
         variants={variants}
-        transition={{ duration, delay, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration, delay, ease: EASE_OUT }}
       >
         {children}
       </motion.span>
@@ -70,7 +71,7 @@ export function Wipe({
       initial={{ clipPath: "inset(0 100% 0 0)" }}
       whileInView={{ clipPath: "inset(0 0% 0 0)" }}
       viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 1.1, delay, ease: [0.76, 0, 0.24, 1] }}
+      transition={{ duration: 1.1, delay, ease: EASE_IN_OUT }}
     >
       {children}
     </motion.div>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { X, Menu } from "lucide-react";
 import { sections } from "@/content/navigation";
-import { profile } from "@/content/profile";
+import { profile } from "@/content/personal";
 import { useActiveSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
 

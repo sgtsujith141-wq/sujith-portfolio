@@ -47,7 +47,7 @@ export const comparison = [
 
 export const surakshascoreMvp: Project = {
   slug: "surakshascore-mvp",
-  index: "04",
+  index: "05",
   name: "SurakshaScore MVP",
   tagline: "The prototype SurakshaScore grew out of, kept public as a record of where the idea started.",
   category: "Security & privacy — the predecessor",

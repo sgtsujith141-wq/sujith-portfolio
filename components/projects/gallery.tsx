@@ -81,7 +81,7 @@ export function Gallery({ shots, frame, label = "Real screenshots", projectName 
               aria-label={`Show screenshot ${k + 1}: ${s.caption}`}
               aria-current={k === i ? "true" : undefined}
               className={cn(
-                "block h-1.5 transition-all duration-300",
+                "block h-1.5 t-base",
                 k === i ? "w-8 bg-accent" : "w-4 bg-line-strong hover:bg-muted",
               )}
             />

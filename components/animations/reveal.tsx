@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { DUR, EASE_OUT, VIEWPORT } from "@/lib/motion";
 
 interface Props {
   children: ReactNode;
@@ -31,8 +32,8 @@ export function Reveal({
       className={cn(className)}
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, amount, margin: "0px 0px -8% 0px" }}
-      transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
+      viewport={{ ...VIEWPORT, once, amount }}
+      transition={{ duration: DUR.slow, delay, ease: EASE_OUT }}
     >
       {children}
     </Tag>

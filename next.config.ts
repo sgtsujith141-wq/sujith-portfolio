@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1600, 1920],
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "motion", "gsap"],
+    optimizePackageImports: ["lucide-react", "motion"],
   },
   async headers() {
     return [

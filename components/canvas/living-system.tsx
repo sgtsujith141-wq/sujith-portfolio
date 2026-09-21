@@ -13,7 +13,7 @@ import {
 import { usePathname } from "next/navigation";
 import { MotionConfig } from "motion/react";
 import { sectionIds } from "@/content/navigation";
-import type { DomainId, ProjectSlug, SectionId } from "@/lib/types";
+import type { ProjectSlug, SectionId } from "@/lib/types";
 import type { FormationName } from "./engine/formations";
 import type { LivingSystemEngine } from "./engine/engine";
 
@@ -38,11 +38,13 @@ interface LivingSystemApi {
   ready: boolean;
   ignite: () => void;
   setFocus: (slug: ProjectSlug | null) => void;
-  setDomain: (id: DomainId | null) => void;
+  setDomain: (id: string | null) => void;
   setHover: (id: string | null) => void;
   /** Element whose rectangle the active formation should fill; null releases. */
   setStage: (el: HTMLElement | null) => void;
   setPhase: (value: number) => void;
+  /** Used only by the opening sequence; null hands the field back. */
+  setIntroScene: (scene: "boot" | "emerge" | null) => void;
 }
 
 const noop = () => {};
@@ -54,6 +56,7 @@ const fallback: LivingSystemApi = {
   setHover: noop,
   setStage: noop,
   setPhase: noop,
+  setIntroScene: noop,
 };
 
 const Ctx = createContext<LivingSystemApi | null>(null);
@@ -76,6 +79,12 @@ export function LivingSystem({ children }: { children: ReactNode }) {
   const engineRef = useRef<LivingSystemEngine | null>(null);
   const [ready, setReady] = useState(false);
   const pendingIgnite = useRef(false);
+  /* The opening sequence mounts before the engine module finishes
+   * loading, so its first scene has to be held and applied on arrival —
+   * otherwise the field never collapses and the name reveals over an
+   * already-expanded network. */
+  const pendingIntro = useRef<"boot" | "emerge" | null>(null);
+  const introActive = useRef(false);
   const stageEl = useRef<HTMLElement | null>(null);
   const requestUpdate = useRef<() => void>(noop);
   const pathname = usePathname();
@@ -106,9 +115,10 @@ export function LivingSystem({ children }: { children: ReactNode }) {
         engineRef.current = engine;
         setReady(true);
         if (pendingIgnite.current || reduced) engine.ignite();
+        if (pendingIntro.current) engine.setIntroScene(pendingIntro.current);
         // Every route needs the field alive, not just the home page whose
-        // hero owns the opening choreography. ignite() is idempotent, so
-        // whichever fires first wins and the other is a no-op.
+        // opening sequence ignites it. ignite() is idempotent, so whichever
+        // fires first wins and the other is a no-op.
         igniteTimer = window.setTimeout(() => engine.ignite(), 240);
 
         let rects: Array<{ id: SectionId; top: number; height: number }> = [];
@@ -276,6 +286,14 @@ export function LivingSystem({ children }: { children: ReactNode }) {
         requestUpdate.current();
       },
       setPhase: (value) => engineRef.current?.setPhase(value),
+      setIntroScene: (scene) => {
+        pendingIntro.current = scene;
+        introActive.current = scene !== null;
+        if (engineRef.current) engineRef.current.setIntroScene(scene);
+        // Releasing the field is also the moment the page takes over, so
+        // re-read the scroll position on the way out.
+        if (!scene) requestUpdate.current();
+      },
     }),
     [ready, ignite],
   );

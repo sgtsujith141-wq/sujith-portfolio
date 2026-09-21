@@ -88,12 +88,12 @@ export function CaseStudy({
                   href={project.repo}
                   target="_blank"
                   rel="noreferrer"
-                  className="group inline-flex items-center gap-2 border border-line-strong px-3.5 py-2 text-sm text-ink transition-colors hover:border-accent-soft hover:text-accent-soft"
+                  className="group inline-flex items-center gap-2 border border-line-strong px-3.5 py-2 text-sm text-ink t-base hover:border-accent-soft hover:text-accent-soft"
                 >
                   <span className="mono text-[11px]">
                     {project.repo.replace("https://github.com/", "")}
                   </span>
-                  <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+                  <ArrowUpRight className="h-3.5 w-3.5 t-base group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
                 </a>
               ) : (
                 <span className="mono border border-line px-3.5 py-2 text-[11px] text-faint">
@@ -161,7 +161,7 @@ export function CaseStudy({
                   <details className="group">
                     <summary className="flex cursor-pointer list-none items-start justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
                       <span className="text-[15px] text-ink">{d.title}</span>
-                      <span aria-hidden className="mono mt-1 text-[11px] text-faint transition-transform group-open:rotate-45">+</span>
+                      <span aria-hidden className="mono mt-1 text-[11px] text-faint t-base group-open:rotate-45">+</span>
                     </summary>
                     <div className="pb-5 text-sm leading-relaxed text-muted">
                       <p>{d.body}</p>

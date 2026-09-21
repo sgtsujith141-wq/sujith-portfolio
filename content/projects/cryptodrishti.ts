@@ -8,7 +8,7 @@ const shots = "/projects/cryptodrishti";
 
 export const cryptodrishti: Project = {
   slug: "cryptodrishti",
-  index: "02",
+  index: "03",
   name: "CryptoDrishti",
   tagline: "Cryptographic discovery and quantum-risk analysis.",
   category: "Security tooling",

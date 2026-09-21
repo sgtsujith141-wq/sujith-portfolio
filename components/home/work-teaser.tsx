@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { projects, featuredSlugs, projectBySlug, statusMeta } from "@/content/projects";
+import { projects, projectBySlug, statusMeta } from "@/content/projects";
+import { featured } from "@/content/personal";
 import { useLivingSystem } from "@/components/canvas/living-system";
 import { Reveal } from "@/components/animations/reveal";
 import { MaskLine } from "@/components/animations/mask-reveal";
@@ -25,7 +26,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 export function WorkTeaser() {
   const stageRef = useRef<HTMLDivElement>(null);
   const { setStage, setHover } = useLivingSystem();
-  const featured = featuredSlugs.map((s) => projectBySlug[s]).filter(Boolean);
+  const shown = featured.map((s) => projectBySlug[s]).filter(Boolean);
 
   useEffect(() => {
     const el = stageRef.current;
@@ -51,10 +52,10 @@ export function WorkTeaser() {
         <div className="grid gap-8 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <SectionHeader
-              index="06"
+              index="05"
               label="Work"
-              title={<span id="work-title">Five things I built and kept running.</span>}
-              lede="Each one is written from the repository — or, in the lab's case, from the machine: what it solves, how it works, what was verified and by what method, and what it does not yet do."
+              title={<span id="work-title">Things I&rsquo;ve built.</span>}
+              lede="A few of them here. The rest, with how each one works and what it does not do yet, are in the work section."
             />
           </div>
           {/* The window the background fills with the project constellation. */}
@@ -66,7 +67,7 @@ export function WorkTeaser() {
         </div>
 
         <ul className="mt-14 grid gap-px bg-line-soft lg:grid-cols-3">
-          {featured.map((p, i) => (
+          {shown.map((p, i) => (
             <Reveal as="li" key={p.slug} delay={i * 0.07} className="h-full bg-base">
               <Tilt className="h-full">
               <div
@@ -76,12 +77,12 @@ export function WorkTeaser() {
               >
                 <Link
                   href={`/work/${p.slug}`}
-                  className="group flex h-full flex-col p-6 transition-colors hover:bg-surface lg:p-7"
+                  className="group flex h-full flex-col p-6 t-base hover:bg-surface lg:p-7"
                 >
                   <div className="flex items-center justify-between">
                     <span className="mono text-[11px] tracking-[0.2em] text-faint">{p.index}</span>
                     <ArrowUpRight
-                      className="h-4 w-4 text-ghost transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent-soft"
+                      className="h-4 w-4 text-ghost t-base group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent-soft"
                       aria-hidden
                     />
                   </div>
@@ -96,7 +97,7 @@ export function WorkTeaser() {
                     </StatusPill>
                     <span
                       aria-hidden
-                      className="h-px flex-1 origin-right scale-x-0 bg-accent/60 transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover:origin-left group-hover:scale-x-100"
+                      className="h-px flex-1 origin-right scale-x-0 bg-accent/60 t-slow group-hover:origin-left group-hover:scale-x-100"
                     />
                   </div>
                 </Link>
@@ -109,17 +110,17 @@ export function WorkTeaser() {
         <Reveal delay={0.1}>
           <div className="mt-px flex flex-col items-start justify-between gap-6 bg-base py-10 sm:flex-row sm:items-center">
             <p className="max-w-md text-sm leading-relaxed text-muted">
-              The other {projects.length - featured.length}, every case study, the engineering
-              evidence and the architecture explorer are in the Work section.
+              {projects.length - shown.length} more, plus how each one is put together and what
+              was actually verified.
             </p>
             <Magnetic>
               <Link
                 href="/work"
-                className="group inline-flex items-center gap-4 border border-ink bg-ink px-7 py-4 text-sm font-medium text-base transition-colors hover:bg-white"
+                className="group inline-flex items-center gap-4 border border-ink bg-ink px-7 py-4 text-sm font-medium text-base t-base hover:bg-white"
               >
                 Enter the work
                 <ArrowRight
-                  className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                  className="h-4 w-4 t-base group-hover:translate-x-1"
                   aria-hidden
                 />
               </Link>

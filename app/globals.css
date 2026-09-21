@@ -35,9 +35,11 @@
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
+  /* The motion system's curves. lib/motion.ts holds the same three for
+   * JavaScript-driven animation, so a hover and a Motion tween agree. */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
-  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
 
   --breakpoint-xs: 30rem;
 }
@@ -51,6 +53,11 @@
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
     background-color: var(--color-base);
+    /* The opening sequence and the mobile menu both lock body scroll.
+     * Without a reserved gutter the scrollbar disappears and the whole
+     * page jumps sideways — which is a layout shift, and was the only
+     * one left on the site. */
+    scrollbar-gutter: stable;
   }
 
   body {
@@ -112,6 +119,35 @@
 }
 
 @layer utilities {
+  /* ── Transitions ──────────────────────────────────────────────────
+   * Three speeds, one curve, and an explicit property list. Nothing on
+   * this site uses `transition-all`: it animates layout properties too,
+   * which is where most of the jank was coming from.
+   * ---------------------------------------------------------------- */
+  .t-fast,
+  .t-base,
+  .t-slow {
+    transition-property: color, background-color, border-color, fill, stroke, opacity,
+      box-shadow, transform;
+    transition-timing-function: var(--ease-soft);
+  }
+  .t-fast {
+    transition-duration: 220ms;
+  }
+  .t-base {
+    transition-duration: 420ms;
+  }
+  .t-slow {
+    transition-duration: 620ms;
+    transition-timing-function: var(--ease-out-expo);
+  }
+  /* For the one case that has to animate a size: the rail's label. */
+  .t-width {
+    transition:
+      opacity 420ms var(--ease-out-expo),
+      transform 620ms var(--ease-out-expo);
+  }
+
   /* Display type: wide-set Archivo with tight tracking. */
   .display {
     font-family: var(--font-display);
@@ -207,57 +243,113 @@
   }
 }
 
-/* ── Opening choreography ──────────────────────────────────────────────
- * The hero is the opening sequence. A blocking script in layout.tsx
- * stamps <html data-intro="pending"> before first paint unless the
- * visitor prefers reduced motion. Elements marked [data-enter] start
- * hidden in the pending state and are animated in by the Hero component,
- * which sets data-intro="done" when the choreography ends. No storage is
- * consulted, so every real page load replays it. */
-html[data-intro="pending"] [data-enter] {
-  opacity: 0;
+/* ── Opening sequence ──────────────────────────────────────────────────
+ *
+ *  Restored from the original portfolio. A blocking script in
+ *  app/layout.tsx stamps <html data-intro> before first paint, and the
+ *  sequence advances it:
+ *
+ *    pending   sequence playing; page hidden, heading hidden
+ *    morphing  page revealed, heading still hidden while the intro name
+ *              travels onto its box
+ *    settling  heading cross-fades in over the arriving intro name
+ *    done      overlay removed
+ *
+ *  There is no opaque backdrop element — the body itself darkens, which
+ *  keeps the shared canvas visible right through the sequence and is why
+ *  the handoff has no flash and no background change.
+ * ------------------------------------------------------------------- */
+
+html[data-intro="done"] .intro-root {
+  display: none !important;
 }
-html[data-intro="pending"] [data-enter="rise"] {
-  transform: translate3d(0, 18px, 0);
+
+html[data-intro="pending"] body {
+  background-color: var(--color-void);
 }
-html[data-intro="pending"] [data-enter="nav"] {
-  transform: translate3d(0, -6px, 0);
+
+body {
+  transition: background-color 700ms var(--ease-out-expo);
 }
-/* Display lines start below their mask and rise into it. */
-html[data-intro="pending"] [data-enter="line"] {
-  transform: translate3d(0, 108%, 0);
+
+#site {
+  position: relative;
+  z-index: 1;
   opacity: 1;
+  transition: opacity 560ms var(--ease-out-expo);
 }
-[data-enter="line"] {
-  transition: transform 1100ms var(--ease-out-expo);
-  transition-delay: var(--enter-delay, 0ms);
+
+html[data-intro="pending"] #site {
+  opacity: 0;
+  pointer-events: none;
 }
+
+/* The page's own heading stays hidden until the intro name has landed on
+ * it, so the two are never on screen together. */
+[data-morph-target] {
+  transition: opacity 200ms var(--ease-out-expo);
+}
+
+html[data-intro="pending"] [data-morph-target],
+html[data-intro="morphing"] [data-morph-target] {
+  opacity: 0 !important;
+}
+
+/* Everything else in the hero waits for the name to land, then follows in
+ * a short stagger. Keyed to the intro state rather than a fixed clock, so
+ * the two can never drift apart. */
+html[data-intro="pending"] [data-enter],
+html[data-intro="morphing"] [data-enter] {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+}
+
 [data-enter] {
   transition:
-    opacity 640ms var(--ease-out-expo),
+    opacity 700ms var(--ease-out-expo),
     transform 900ms var(--ease-out-expo);
   transition-delay: var(--enter-delay, 0ms);
 }
 
-/* The light field: one composited layer, no canvas pixels. Its colour
- * comes from --light-rgb, which the engine sets per section, and it is
- * moved only by transform so it never leaves the compositor. */
-.light-field {
-  width: 120vmax;
-  height: 120vmax;
-  background: radial-gradient(
-    closest-side,
-    rgba(var(--light-rgb, 79, 124, 255), 0.1),
-    rgba(var(--light-rgb, 79, 124, 255), 0.04) 45%,
-    transparent 72%
-  );
-  will-change: transform, opacity;
-  transition: opacity 600ms var(--ease-out-expo);
+/* One glitch beat as the name locks in — two clipped chromatic copies,
+ * 1px apart. Deliberately short; anything longer reads as a cliché. */
+.intro-glitch {
+  animation: glitch-shift 150ms steps(2, end) 1;
+}
+.intro-glitch::before,
+.intro-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  font-family: var(--font-geist-mono);
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  pointer-events: none;
+}
+.intro-glitch::before {
+  color: var(--color-signal);
+  transform: translate3d(-1.5px, 0, 0);
+  clip-path: inset(0 0 58% 0);
+  opacity: 0.7;
+}
+.intro-glitch::after {
+  color: var(--color-violet);
+  transform: translate3d(1.5px, 0, 0);
+  clip-path: inset(56% 0 0 0);
+  opacity: 0.55;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .light-field {
-    transition: none;
+@keyframes glitch-shift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -274,6 +366,24 @@ html[data-intro="pending"] [data-enter="line"] {
 }
 .animate-pulse-dot {
   animation: pulse-dot 2.4s var(--ease-in-out-quart) infinite;
+}
+
+/* The server breathing. One transform, compositor-only. */
+@keyframes server-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+.server-breathe {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: server-breathe 6s var(--ease-in-out-quart) infinite;
 }
 
 @keyframes scroll-cue {

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { CornerDownRight } from "lucide-react";
 import { homelab, services, serviceEdges } from "@/content/homelab";
-import { domainById } from "@/content/identity";
+import { interests } from "@/content/personal";
 import { useLivingSystem } from "@/components/canvas/living-system";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
@@ -178,7 +178,7 @@ export function LabTopology({
                     stroke={on ? "#3fd2f0" : "#2a3140"}
                     strokeOpacity={dim ? 0.3 : 1}
                     strokeWidth={on ? 1.5 : 1}
-                    className="transition-all duration-500"
+                    className="t-slow"
                   />
                   {!reduced && !dim ? (
                     <path
@@ -222,7 +222,7 @@ export function LabTopology({
                   onKeyDown={(e) => onKeyDown(e, s.id)}
                   onClick={() => setSelected((c) => (c === s.id ? null : s.id))}
                   className={cn(
-                    "absolute flex -translate-x-1/2 -translate-y-1/2 flex-col justify-center border bg-base px-3 text-left transition-all duration-500",
+                    "absolute flex -translate-x-1/2 -translate-y-1/2 flex-col justify-center border bg-base px-3 text-left t-slow",
                     on
                       ? "border-signal text-ink shadow-[0_0_26px_-8px_rgba(63,210,240,0.9)]"
                       : "border-line text-muted hover:border-line-strong hover:text-ink",
@@ -276,7 +276,7 @@ export function LabTopology({
                 <span
                   aria-hidden
                   className={cn(
-                    "absolute left-[18px] top-1/2 h-2 w-2 -translate-y-1/2 rounded-full border transition-colors",
+                    "absolute left-[18px] top-1/2 h-2 w-2 -translate-y-1/2 rounded-full border t-base",
                     on ? "border-signal bg-signal" : "border-line-strong bg-base",
                   )}
                 />
@@ -324,13 +324,13 @@ export function LabTopology({
                     <li
                       key={l}
                       className={cn(
-                        "flex items-center gap-3 text-sm transition-colors duration-300",
+                        "flex items-center gap-3 text-sm t-base",
                         done ? "text-ink" : "text-ghost",
                       )}
                     >
                       <span
                         className={cn(
-                          "h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-300",
+                          "h-1.5 w-1.5 shrink-0 rounded-full t-base",
                           done ? "bg-signal" : "bg-line-strong",
                         )}
                         aria-hidden
@@ -385,7 +385,7 @@ export function LabTopology({
                     key={d}
                     className="mono border border-line px-2.5 py-1.5 text-[10px] tracking-[0.1em] text-faint"
                   >
-                    {domainById[d]?.label ?? d}
+                    {interests.find((i) => i.id === d)?.label ?? d}
                   </li>
                 ))}
               </ul>
