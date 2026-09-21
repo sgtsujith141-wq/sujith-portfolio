@@ -51,8 +51,6 @@ interface SimNode {
   ty: number;
   a: number;
   ta: number;
-  la: number;
-  tla: number;
   lit: number;
   tlit: number;
   z: number;
@@ -62,7 +60,6 @@ interface SimNode {
   /** Pulse energy, decays on its own. */
   pulse: number;
   phase: number;
-  label: string;
 }
 
 interface Ambient {
@@ -84,6 +81,15 @@ interface Signal {
   t: number;
   speed: number;
   reverse: boolean;
+  hue: number;
+}
+
+interface Stream {
+  /** Four control points in viewport fractions; they drift on their own. */
+  cp: Array<{ x: number; y: number; ax: number; ay: number; sp: number; ph: number }>;
+  /** Motes travelling the curve, each with its own position and speed. */
+  motes: Array<{ t: number; speed: number; size: number }>;
+  alpha: number;
   hue: number;
 }
 
@@ -149,6 +155,9 @@ export class LivingSystemEngine {
   private index = new Map<string, number>();
   private edges: Array<[number, number]> = [];
   private ambient: Ambient[] = [];
+  private streams: Stream[] = [];
+  /** One soft-dot sprite per current colour, drawn once at construction. */
+  private motes: HTMLCanvasElement[] = [];
   private signals: Signal[] = [];
   private pulses: Pulse[] = [];
 
@@ -182,11 +191,6 @@ export class LivingSystemEngine {
   private ignited = false;
   private ignitionStart = 0;
 
-  /** Cached once per resize: reading it per frame forces a style recalc,
-   *  which on a page with pinned and sticky elements costs more than the
-   *  entire rest of the frame. */
-  private labelFont = "500 10px ui-monospace, monospace";
-
   private raf = 0;
   private running = false;
   private visible = true;
@@ -203,6 +207,8 @@ export class LivingSystemEngine {
     this.opts = opts;
 
     this.build();
+    this.buildMoteSprites();
+    this.buildStreams();
     this.resize();
     if (opts.reduced) {
       this.ignition = 1;
@@ -326,9 +332,6 @@ export class LivingSystemEngine {
       this.light = { x: this.w * 0.5, y: this.h * 0.4 };
     }
 
-    const mono = getComputedStyle(this.canvas).getPropertyValue("--font-geist-mono").trim();
-    this.labelFont = `500 10px ${mono || "ui-monospace, monospace"}`;
-
     const want = this.ambientCount();
     if (this.ambient.length !== want) this.buildAmbient(want);
     this.retarget();
@@ -358,8 +361,6 @@ export class LivingSystemEngine {
       ty: 0,
       a: 0,
       ta: 0,
-      la: 0,
-      tla: 0,
       lit: 0,
       tlit: 0,
       z: 0.5,
@@ -367,7 +368,6 @@ export class LivingSystemEngine {
       e: 0,
       pulse: 0,
       phase: seeded(i * 5.3 + 2) * Math.PI * 2,
-      label: n.label,
     }));
     this.index = new Map(this.nodes.map((n, i) => [n.id, i]));
     this.edges = [];
@@ -384,6 +384,74 @@ export class LivingSystemEngine {
     if (this.opts.coarse) n = Math.round(n * 0.5);
     if (this.opts.lowPower) n = Math.round(n * 0.6);
     return n;
+  }
+
+  /** A radial falloff baked into a small canvas, so a mote is one blit. */
+  private buildMoteSprites() {
+    this.motes = [RGB.signal, RGB.violet, RGB.accent].map((colour) => {
+      const size = 64;
+      const c = document.createElement("canvas");
+      c.width = size;
+      c.height = size;
+      const cx = c.getContext("2d");
+      if (cx) {
+        const g = cx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+        g.addColorStop(0, rgba(colour, 0.85));
+        g.addColorStop(0.35, rgba(colour, 0.28));
+        g.addColorStop(1, rgba(colour, 0));
+        cx.fillStyle = g;
+        cx.fillRect(0, 0, size, size);
+      }
+      return c;
+    });
+  }
+
+  /** Currents are built once and never rebuilt — they are the slowest,
+   *  most continuous thing on screen and must survive every section. */
+  private buildStreams() {
+    const count = this.opts.lowPower ? 2 : this.opts.coarse ? 3 : 5;
+    this.streams = Array.from({ length: count }, (_, i) => {
+      const cp = Array.from({ length: 4 }, (_, k) => ({
+        x: seeded(i * 31.7 + k * 7.1 + 3),
+        y: seeded(i * 17.3 + k * 11.9 + 8),
+        ax: 0.05 + seeded(i * 5.1 + k) * 0.12,
+        ay: 0.04 + seeded(i * 9.7 + k * 3) * 0.1,
+        sp: 0.00007 + seeded(i * 2.3 + k) * 0.00011,
+        ph: seeded(i * 13.1 + k * 5) * Math.PI * 2,
+      }));
+      const moteCount = this.opts.lowPower ? 2 : 3;
+      return {
+        cp,
+        motes: Array.from({ length: moteCount }, (_, m) => ({
+          t: seeded(i * 23.9 + m * 3.7),
+          speed: 0.00006 + seeded(i * 7.7 + m) * 0.00009,
+          size: 0.5 + seeded(i * 4.3 + m) * 0.7,
+        })),
+        alpha: 0.1 + seeded(i * 6.1 + 2) * 0.1,
+        hue: seeded(i * 8.9 + 5),
+      };
+    });
+  }
+
+  /** Where a stream's four control points are this frame, in pixels. */
+  private streamControls(st: Stream, now: number) {
+    return st.cp.map((c) => ({
+      x: (c.x + Math.cos(now * c.sp + c.ph) * c.ax) * this.w,
+      y: (c.y + Math.sin(now * c.sp * 1.23 + c.ph) * c.ay) * this.h,
+    }));
+  }
+
+  /** Cubic bezier point from already-solved control points. */
+  private bezier(p: Array<{ x: number; y: number }>, t: number) {
+    const u = 1 - t;
+    const a = u * u * u;
+    const b = 3 * u * u * t;
+    const c2 = 3 * u * t * t;
+    const d = t * t * t;
+    return {
+      x: a * p[0]!.x + b * p[1]!.x + c2 * p[2]!.x + d * p[3]!.x,
+      y: a * p[0]!.y + b * p[1]!.y + c2 * p[2]!.y + d * p[3]!.y,
+    };
   }
 
   private buildAmbient(n: number) {
@@ -416,16 +484,12 @@ export class LivingSystemEngine {
       stage: this.stage,
     });
 
-    // Labelled nodes never run under the rail or off the edges.
-    const minX = 22;
-    const maxX = this.narrow ? this.w - 22 : this.w - 232;
     for (const n of this.nodes) {
       const target: Target | undefined = t[n.id];
       if (!target) continue;
-      n.tx = target.la > 0.05 ? Math.min(maxX, Math.max(minX, target.x)) : target.x;
-      n.ty = Math.min(this.h - 14, Math.max(14, target.y));
+      n.tx = target.x;
+      n.ty = target.y;
       n.ta = target.a;
-      n.tla = target.la;
       n.tlit = target.lit;
       n.tz = target.z;
     }
@@ -453,7 +517,6 @@ export class LivingSystemEngine {
       n.y = n.ty;
       n.vx = n.vy = 0;
       n.a = n.ta;
-      n.la = n.tla;
       n.lit = n.tlit;
       n.z = n.tz;
     }
@@ -559,7 +622,6 @@ export class LivingSystemEngine {
 
       const ease = Math.min(1, 0.045 * dt);
       n.a += (n.ta * gate - n.a) * ease;
-      n.la += (n.tla * gate - n.la) * ease;
       n.lit += (n.tlit - n.lit) * ease;
       n.z += (n.tz - n.z) * ease;
     }
@@ -576,6 +638,13 @@ export class LivingSystemEngine {
       a.x += a.vx * dt;
       a.y += a.vy * dt;
       a.a += (a.ta * aGate - a.a) * Math.min(1, 0.038 * dt);
+    }
+
+    for (const st of this.streams) {
+      for (const m of st.motes) {
+        m.t += m.speed * dt * 16.667;
+        if (m.t > 1) m.t -= 1;
+      }
     }
 
     this.stepSignals(dt);
@@ -682,11 +751,50 @@ export class LivingSystemEngine {
     ctx.clearRect(-this.w, -this.h, this.w * 3, this.h * 3);
 
     const tint = this.tint();
-    const par = (depth: number) => ({ dx: -px * depth * 34, dy: -py * depth * 34 });
+    // Parallax scales hard with depth so the layers genuinely separate;
+    // the previous 34px spread was too flat to read as distance.
+    const par = (depth: number) => ({ dx: -px * depth * 64, dy: -py * depth * 64 });
 
     /* 1 — the light field is no longer drawn here. It is a composited
      * DOM layer in the provider, driven by CSS custom properties this
      * engine publishes below, so it costs the canvas nothing. */
+
+    /* 1b — currents. Long slow bezier paths with light travelling along
+     * them, drawn behind everything else at far depth. Control points are
+     * solved once per stream per frame and the motes are cached sprites,
+     * so this whole layer is a handful of strokes and blits. */
+    if (this.ignition > 0.2) {
+      const t0 = this.time * 16.667;
+      const par0 = par(0.2);
+      ctx.lineWidth = 1;
+      for (const st of this.streams) {
+        const cps = this.streamControls(st, t0);
+        ctx.beginPath();
+        const steps = 16;
+        for (let i = 0; i <= steps; i++) {
+          const pt = this.bezier(cps, i / steps);
+          if (i === 0) ctx.moveTo(pt.x + par0.dx, pt.y + par0.dy);
+          else ctx.lineTo(pt.x + par0.dx, pt.y + par0.dy);
+        }
+        ctx.strokeStyle = rgba(
+          st.hue > 0.66 ? RGB.violet : st.hue > 0.33 ? tint : RGB.muted,
+          st.alpha * 0.55 * this.ignition,
+        );
+        ctx.stroke();
+
+        const sprite = this.motes[st.hue > 0.66 ? 1 : st.hue > 0.33 ? 0 : 2];
+        if (!sprite) continue;
+        for (const m of st.motes) {
+          const pt = this.bezier(cps, m.t);
+          const fade = Math.sin(m.t * Math.PI);
+          if (fade < 0.02) continue;
+          const d = m.size * 26;
+          ctx.globalAlpha = fade * this.ignition * 0.42;
+          ctx.drawImage(sprite, pt.x + par0.dx - d / 2, pt.y + par0.dy - d / 2, d, d);
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
 
     /* 2 — ambient lattice. */
     const linkDist = Math.min(this.w, this.h) * (this.routed > 0.5 ? 0.13 : 0.105);
@@ -786,19 +894,17 @@ export class LivingSystemEngine {
     }
 
     /* 5 — nodes. Radius and haze scale with depth. */
-    ctx.font = this.labelFont;
-    ctx.textBaseline = "middle";
     for (const n of this.nodes) {
       if (n.a < 0.02) continue;
       const p = par(n.z);
       const x = n.x + p.dx;
       const y = n.y + p.dy;
       const heat = Math.max(n.lit, n.e, n.pulse);
-      const r = (0.9 + n.weight * 2.2 + heat * 1.5) * (0.55 + n.z * 0.55);
+      const r = (0.9 + n.weight * 2.2 + heat * 1.5) * (0.42 + n.z * 0.78);
       const colour = kindColor(n.kind);
       const hot = mix(colour, tint, Math.min(0.6, heat));
       // Far nodes sink into the background rather than just shrinking.
-      const alpha = n.a * (0.38 + heat * 0.62) * (0.45 + n.z * 0.55);
+      const alpha = n.a * (0.38 + heat * 0.62) * (0.3 + n.z * 0.72);
 
       if (heat > 0.22) {
         const g = ctx.createRadialGradient(x, y, 0, x, y, r * 7);
@@ -827,24 +933,6 @@ export class LivingSystemEngine {
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fill();
-
-      const la = (this.quiet ? n.la : Math.max(n.la, n.e * 0.85)) * n.a;
-      // Cull in screen space: the camera zoom and pan mean a node inside
-      // the viewport can still render a label off the edge, or under the
-      // navigation rail on the right.
-      const sx = x * z + ox;
-      const sy = y * z + oy;
-      const labelFits =
-        sx > 14 && sx < this.w - (this.narrow ? 90 : 240) && sy > 16 && sy < this.h - 14;
-      if (la > 0.04 && labelFits) {
-        const text =
-          n.kind === "project" || n.kind === "root" || n.kind === "domain"
-            ? n.label.toUpperCase()
-            : n.label;
-        const shade = heat > 0.3 ? RGB.ink : RGB.faint;
-        ctx.fillStyle = rgba(shade, Math.min(0.92, la));
-        ctx.fillText(text, x + r + 8, y + 0.5);
-      }
     }
 
     /* 6 — the opening pulse, before the field exists. */

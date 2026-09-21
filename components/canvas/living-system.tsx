@@ -12,6 +12,7 @@ import {
 } from "react";
 import { usePathname } from "next/navigation";
 import { MotionConfig } from "motion/react";
+import { Atmosphere } from "./atmosphere";
 import { sectionIds } from "@/content/navigation";
 import type { ProjectSlug, SectionId } from "@/lib/types";
 import type { FormationName } from "./engine/formations";
@@ -75,7 +76,7 @@ function detectLowPower() {
 
 export function LivingSystem({ children }: { children: ReactNode }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const lightRef = useRef<HTMLDivElement>(null);
+  const [reduced, setReduced] = useState(false);
   const engineRef = useRef<LivingSystemEngine | null>(null);
   const [ready, setReady] = useState(false);
   const pendingIgnite = useRef(false);
@@ -102,6 +103,7 @@ export function LivingSystem({ children }: { children: ReactNode }) {
         if (cancelled || !canvasRef.current) return;
         const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         const coarse = window.matchMedia("(pointer: coarse)").matches;
+        setReduced(reduced);
         let engine: LivingSystemEngine;
         try {
           engine = new LivingSystemEngine(canvasRef.current, {
@@ -199,25 +201,21 @@ export function LivingSystem({ children }: { children: ReactNode }) {
         const onPointerLeave = () => engine.setPointer(0, 0, false);
         const onVisibility = () => engine.setVisible(!document.hidden);
 
-        /* The light field is a composited DOM layer rather than canvas
-         * pixels. Only transform and opacity are touched, so it stays on
-         * the compositor and the main thread does no painting for it. */
-        let lightRaf = 0;
-        const paintLight = () => {
-          const el = lightRef.current;
-          if (el) {
-            const l = engine.readLight();
-            el.style.transform = `translate3d(${Math.round(l.x)}px, ${Math.round(l.y)}px, 0) translate(-50%, -50%)`;
-            el.style.setProperty("--light-rgb", l.rgb);
-            el.style.opacity = String(Math.min(1, l.intensity * 9));
+        /* The atmosphere owns its own motion. All the engine contributes
+         * is the section's tint, published as a custom property and
+         * eased by CSS — so the palette drifts between sections instead
+         * of switching. */
+        let tintRaf = 0;
+        let lastTint = "";
+        const paintTint = () => {
+          const l = engine.readLight();
+          if (l.rgb !== lastTint) {
+            lastTint = l.rgb;
+            document.documentElement.style.setProperty("--light-rgb", l.rgb);
           }
-          lightRaf = requestAnimationFrame(paintLight);
+          tintRaf = window.setTimeout(paintTint, 160);
         };
-        if (!reduced) lightRaf = requestAnimationFrame(paintLight);
-        else {
-          const el = lightRef.current;
-          if (el) el.style.opacity = "0.45";
-        }
+        paintTint();
 
         measure();
         update();
@@ -228,7 +226,7 @@ export function LivingSystem({ children }: { children: ReactNode }) {
 
         cleanup = () => {
           requestUpdate.current = noop;
-          cancelAnimationFrame(lightRaf);
+          clearTimeout(tintRaf);
           clearTimeout(igniteTimer);
           cancelAnimationFrame(scrollRaf);
           cancelAnimationFrame(pointerRaf);
@@ -300,15 +298,7 @@ export function LivingSystem({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider value={api}>
-      {/* The room's light. A single composited layer that follows the
-          pointer and takes the active section's tint. */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div
-          ref={lightRef}
-          className="light-field absolute left-0 top-0 opacity-0"
-          style={{ transform: "translate3d(50vw, 40vh, 0) translate(-50%, -50%)" }}
-        />
-      </div>
+      <Atmosphere reduced={reduced} />
       <canvas
         ref={canvasRef}
         aria-hidden="true"

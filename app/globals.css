@@ -353,6 +353,61 @@ html[data-intro="morphing"] [data-enter] {
   }
 }
 
+/* ── Atmosphere ────────────────────────────────────────────────────────
+ * Large soft pools of light, a pointer light, and a fine grain. All
+ * composited: only transform and opacity change, so none of this costs
+ * the main thread a paint. The canvas above draws structure; this is the
+ * room it sits in.
+ *
+ * (The previous light layer's styles were lost in an earlier edit, which
+ * left its element in the DOM with nothing to draw. This replaces it.)
+ * ------------------------------------------------------------------- */
+
+.atmosphere-pool {
+  width: var(--pool-size);
+  height: var(--pool-size);
+  /* Its own compositor layer, so moving it never repaints the page. */
+  contain: strict;
+  background: radial-gradient(
+    closest-side,
+    rgba(var(--pool-rgb), var(--pool-alpha)),
+    rgba(var(--pool-rgb), calc(var(--pool-alpha) * 0.36)) 42%,
+    transparent 70%
+  );
+  will-change: transform;
+}
+
+.atmosphere-light {
+  width: 52vmax;
+  height: 52vmax;
+  contain: strict;
+  background: radial-gradient(
+    closest-side,
+    rgba(var(--light-rgb, 79, 124, 255), 0.13),
+    rgba(var(--light-rgb, 79, 124, 255), 0.045) 40%,
+    transparent 68%
+  );
+  will-change: transform;
+  transition: background 1200ms var(--ease-out-expo);
+}
+
+/* Dithering. Large dark gradients band badly on 8-bit panels; a faint
+ * grain breaks it up and costs one repeated 120px tile.
+ *
+ * No blend mode: `mix-blend-mode` forces the whole stacking context to
+ * recomposite on every frame the pools move, which on its own cost about
+ * a third of the frame budget. Plain opacity does the job here. */
+.atmosphere-grain {
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atmosphere-light {
+    transition: none;
+  }
+}
+
 @keyframes pulse-dot {
   0%,
   100% {
