@@ -36,6 +36,9 @@ export const profile = {
     cgpaScale: "10",
   },
 
+  /** Rendered letter by letter in the opening sequence. */
+  disciplines: ["NETWORKING", "CYBERSECURITY", "SYSTEMS"],
+
   /** Short labels for the hero rail. The full model is content/identity.ts. */
   interests: [
     "Networking",

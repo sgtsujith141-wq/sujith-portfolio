@@ -69,16 +69,17 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-/* Runs before first paint. Hides the entrance elements, then releases
- * them on its own timer so the choreography starts even before React has
- * hydrated on a slow device. No storage is consulted, so every real page
- * load replays it. Reduced motion skips it entirely. */
+/* Runs before first paint, so nothing flashes before the sequence owns
+ * the screen. The opening plays on the home route only; every other
+ * route starts in the finished state. No storage of any kind is read,
+ * so a real reload always replays it. prefers-reduced-motion skips it
+ * entirely, and the sequence itself advances the state from here. */
 const INTRO_GATE = `
 try {
-  var r = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var d = document.documentElement;
-  d.setAttribute('data-intro', r ? 'done' : 'pending');
-  if (!r) setTimeout(function () { d.setAttribute('data-intro', 'done'); }, 240);
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var home = location.pathname === '/' || location.pathname === '';
+  document.documentElement.setAttribute('data-intro', reduced || !home ? 'done' : 'pending');
+  if (!reduced && home && 'scrollRestoration' in history) history.scrollRestoration = 'manual';
 } catch (e) {
   document.documentElement.setAttribute('data-intro', 'done');
 }
@@ -94,7 +95,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: INTRO_GATE }} />
         <noscript>
-          <style>{`[data-enter]{opacity:1!important;transform:none!important}`}</style>
+          {/* Without JS the sequence can never hand off, so show the site. */}
+          <style>{`.intro-root{display:none!important}#site{opacity:1!important;pointer-events:auto!important}[data-enter]{opacity:1!important;transform:none!important}`}</style>
         </noscript>
       </head>
       <body className="antialiased">

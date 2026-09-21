@@ -1,3 +1,4 @@
+import { IntroSequence } from "@/components/intro/intro-sequence";
 import { NavRail } from "@/components/layout/nav-rail";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Hero } from "@/components/home/hero";
@@ -13,17 +14,20 @@ import { Connect } from "@/components/home/connect";
 export default function Page() {
   return (
     <>
-      <NavRail />
-      <MobileNav />
-      <main id="main" className="relative z-[1]">
-        <Hero />
-        <About />
-        <TechnicalWorld />
-        <HomeLabSection />
-        <Exploring />
-        <WorkTeaser />
-        <Connect />
-      </main>
+      <IntroSequence />
+      <div id="site">
+        <NavRail />
+        <MobileNav />
+        <main id="main" className="relative z-[1]">
+          <Hero />
+          <About />
+          <TechnicalWorld />
+          <HomeLabSection />
+          <Exploring />
+          <WorkTeaser />
+          <Connect />
+        </main>
+      </div>
     </>
   );
 }

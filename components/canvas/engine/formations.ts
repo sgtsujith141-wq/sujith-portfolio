@@ -24,7 +24,7 @@ import { seeded } from "@/lib/utils";
  *    work-route    the /work page's own standing formation
  * ══════════════════════════════════════════════════════════════════════ */
 
-export type FormationName = SectionId | "work-route";
+export type FormationName = SectionId | "work-route" | "boot" | "emerge";
 
 export interface Target {
   x: number;
@@ -161,6 +161,50 @@ function ring(
       z: opts.z,
     };
   });
+}
+
+/* ── The opening sequence ──────────────────────────────────────────────
+ *
+ *  Restored from the original intro: the field starts collapsed at the
+ *  centre behind the name, then condenses out of it as a golden-angle
+ *  spiral. When the sequence releases the field, the normal section
+ *  formation takes over and the same nodes are thrown outward to fill
+ *  the viewport — which is what makes the handoff read as one system
+ *  expanding rather than one screen replacing another.
+ * ------------------------------------------------------------------- */
+
+/** Golden angle — an even spread with no clumping. */
+const GOLDEN = 2.399963229728653;
+
+function boot(v: Viewport): FormationResult {
+  const t: Record<string, Target> = {};
+  const cx = v.w / 2;
+  const cy = v.h / 2;
+  for (const n of graphNodes) {
+    t[n.id] = { x: cx, y: cy, a: 0, la: 0, lit: 0, z: 0.5 };
+  }
+  return { t, cam: { zoom: 1, x: 0, y: 0, tilt: 0 }, mood: 0.1, flow: 0, routed: 0 };
+}
+
+function emerge(v: Viewport): FormationResult {
+  const t: Record<string, Target> = {};
+  const cx = v.w / 2;
+  const cy = v.h / 2;
+  const aspect = v.w / Math.max(1, v.h);
+  const n = graphNodes.length;
+  graphNodes.forEach((node, i) => {
+    const ang = i * GOLDEN;
+    const r = (0.04 + (i / n) * 0.16 + seeded(i * 3.1 + 5) * 0.02) * Math.min(v.w, v.h) * 2;
+    t[node.id] = {
+      x: cx + Math.cos(ang) * r,
+      y: cy + (Math.sin(ang) * r) / aspect,
+      a: 0.72,
+      la: 0,
+      lit: 0.12,
+      z: 0.45 + seeded(i * 7.7 + 2) * 0.4,
+    };
+  });
+  return { t, cam: { zoom: 1, x: 0, y: 0, tilt: 0 }, mood: 0.2, flow: 0.4, routed: 0 };
 }
 
 /* ── 01 Introduction ───────────────────────────────────────────────── */
@@ -601,6 +645,10 @@ function workRoute(v: Viewport, p: number, focus: ProjectSlug | null, stage: Sta
 export function formation(v: Viewport, input: FormationInput): FormationResult {
   const p = Math.max(0, Math.min(1, input.progress));
   switch (input.name) {
+    case "boot":
+      return boot(v);
+    case "emerge":
+      return emerge(v);
     case "introduction":
       return introduction(v, p);
     case "about":
@@ -630,6 +678,23 @@ export function ambientTargets(
   const out: Array<{ x: number; y: number; a: number; z: number }> = [];
   const cols = Math.max(4, Math.round(Math.sqrt(count * (v.w / v.h))));
   const rows = Math.max(3, Math.ceil(count / cols));
+  if (name === "boot" || name === "emerge") {
+    const cx = v.w / 2;
+    const cy = v.h / 2;
+    const spread = name === "emerge" ? Math.min(v.w, v.h) * 0.22 : 0;
+    for (let i = 0; i < count; i++) {
+      const ang = i * GOLDEN;
+      const r = spread * (0.2 + (i / count) * 0.9);
+      out.push({
+        x: cx + Math.cos(ang) * r,
+        y: cy + Math.sin(ang) * r * 0.7,
+        a: name === "emerge" ? 0.3 : 0,
+        z: 0.12 + seeded(i * 11.9 + 4) * 0.42,
+      });
+    }
+    return out;
+  }
+
   const converge = name === "connect" ? progress : 0;
   // The lab formation snaps the ambient field onto a rack-like grid.
   const lattice = name === "homelab" ? 1 : name === "about" ? 0.55 : 0;

@@ -156,6 +156,8 @@ export class LivingSystemEngine {
   private camTarget: Camera = { zoom: 1, x: 0, y: 0, tilt: 0 };
 
   private section: FormationName = "introduction";
+  /** While the opening sequence runs it owns the field outright. */
+  private intro: FormationName | null = null;
   private progress = 0;
   private phase = 1;
   private focus: ProjectSlug | null = null;
@@ -219,12 +221,27 @@ export class LivingSystemEngine {
     this.ignitionStart = performance.now();
   }
 
+  /** Driven only by the opening sequence. null releases the field back
+   *  to whatever section the visitor is looking at. */
+  setIntroScene(scene: FormationName | null) {
+    if (scene === this.intro) return;
+    this.intro = scene;
+    // The opening owns the gate too: the field is "on" from the first
+    // beat, it is simply collapsed at the centre until emerge.
+    if (scene) this.ignite();
+    this.retarget();
+    if (this.opts.reduced) {
+      this.snap();
+      this.draw();
+    }
+  }
+
   setSection(name: FormationName, progress: number) {
     const changed = name !== this.section;
     this.section = name;
     this.progress = progress;
     this.retarget();
-    if (changed) {
+    if (changed && !this.intro) {
       // A section change is a large-scale event: send a wave through it.
       if (!this.opts.reduced) this.pulses.push({ front: -0.4, life: 1 });
       if (this.opts.reduced) {
@@ -389,7 +406,7 @@ export class LivingSystemEngine {
 
   private retarget() {
     const { t, cam, mood, flow, routed } = formation(this.viewport(), {
-      name: this.section,
+      name: this.intro ?? this.section,
       progress: this.progress,
       phase: this.phase,
       focus: this.focus,
