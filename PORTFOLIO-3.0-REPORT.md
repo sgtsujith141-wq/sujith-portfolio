@@ -9,23 +9,22 @@ design are in `docs/audit/`, of the new one in `docs/v3/`.
 
 ---
 
-## 1. Where this branch is cut from — read this first
+## 1. Where this branch is cut from
 
-The brief says to branch from production `main`. I did not, and the reason matters.
+The brief said to branch from production `main`. At the time I started, three of the files
+it listed for audit — `content/personal.ts`, `lib/motion.ts` and
+`components/intro/intro-sequence.tsx` — did not exist on `main`. They were only on
+`fix/personal-portfolio-experience`, the then-open PR #2, along with the recovered startup
+animation. Branching from `main` would have deleted the animation the brief calls
+non-negotiable, so I cut this branch from that PR instead and flagged it.
 
-Three of the files the brief lists for audit — `content/personal.ts`, `lib/motion.ts` and
-`components/intro/intro-sequence.tsx` — **do not exist on `main`**. They live only on
-`fix/personal-portfolio-experience`, the open and unmerged PR #2, which is also where the
-recovered startup animation is. Branching from `main` would have deleted the animation
-the brief calls non-negotiable and reverted the personal-content corrections.
+**That has resolved itself.** PR #2 was merged into `main` while this work was in
+progress. The commit this branch is based on (`c73e251`) is now an ancestor of `main`, the
+only commit `main` carries that this branch does not is the merge commit itself, and the
+merge back is clean. Nothing needs rebasing.
 
-So this branch is cut from that PR. If PR #2 is merged first, this rebases onto `main`
-cleanly. If you would rather I redo it on top of `main`, say so and I will.
-
-(Also: the brief names `content/projects.ts`. The real path is the directory
-`content/projects/`, one file per project.)
-
----
+(One naming note stands: the brief names `content/projects.ts`. The real path is the
+directory `content/projects/`, one file per project.)
 
 ## 2. The startup animation is untouched
 
