@@ -37,7 +37,7 @@ export function FeaturedWide({ project, index }: { project: Project; index: stri
   return (
     <article ref={ref} className="relative">
       <div className="grid gap-8 lg:grid-cols-12 lg:items-end">
-        <div className="lg:col-span-7">
+        <div className="min-w-0 lg:col-span-7">
           <Reveal>
             <p className="label flex items-center gap-3">
               <span className="text-accent">{index}</span>
@@ -45,7 +45,7 @@ export function FeaturedWide({ project, index }: { project: Project; index: stri
               <span>{project.category}</span>
             </p>
           </Reveal>
-          <h3 className="display mt-6 text-[clamp(2.6rem,7vw,5.6rem)] leading-[0.95] text-ink">
+          <h3 className="display mt-6 text-[clamp(2.4rem,6.2vw,5rem)] leading-[0.95] text-ink">
             <MaskLine>{project.name}</MaskLine>
           </h3>
         </div>
@@ -149,7 +149,7 @@ export function FeaturedPhones({ project, index }: { project: Project; index: st
           </ul>
         </div>
 
-        <div className="order-1 lg:order-2 lg:col-span-5">
+        <div className="order-1 min-w-0 lg:order-2 lg:col-span-5">
           <Reveal>
             <p className="label flex items-center gap-3">
               <span className="text-accent">{index}</span>
@@ -157,7 +157,7 @@ export function FeaturedPhones({ project, index }: { project: Project; index: st
               <span>{project.category}</span>
             </p>
           </Reveal>
-          <h3 className="display mt-6 text-[clamp(2.4rem,5.6vw,4.4rem)] leading-[0.95] text-ink">
+          <h3 className="display mt-6 text-[clamp(2rem,4.2vw,3.3rem)] leading-[0.98] text-ink">
             <MaskLine>{project.name}</MaskLine>
           </h3>
           <Reveal delay={0.1}>
