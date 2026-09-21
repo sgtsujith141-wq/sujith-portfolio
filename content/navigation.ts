@@ -10,12 +10,11 @@ import type { NavSection, SectionId } from "@/lib/types";
 
 export const sections: NavSection[] = [
   { id: "introduction", index: "01", label: "Introduction", short: "Intro" },
-  { id: "about", index: "02", label: "Who I Am", short: "About" },
-  { id: "network", index: "03", label: "Technical World", short: "World" },
-  { id: "homelab", index: "04", label: "Home Lab", short: "Lab" },
-  { id: "exploring", index: "05", label: "Exploring", short: "Now" },
-  { id: "work", index: "06", label: "Work", short: "Work" },
-  { id: "connect", index: "07", label: "Connect", short: "Connect" },
+  { id: "about", index: "02", label: "About", short: "About" },
+  { id: "machines", index: "03", label: "Machines", short: "Machines" },
+  { id: "now", index: "04", label: "Now", short: "Now" },
+  { id: "work", index: "05", label: "Work", short: "Work" },
+  { id: "connect", index: "06", label: "Connect", short: "Connect" },
 ];
 
 export const sectionIds: SectionId[] = sections.map((s) => s.id);

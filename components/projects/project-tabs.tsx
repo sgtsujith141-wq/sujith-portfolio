@@ -21,7 +21,7 @@ export function ProjectTabs({ active }: { active: ProjectSlug | null }) {
                 href={`#project-${p.slug}`}
                 aria-current={isActive ? "true" : undefined}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 text-sm transition-colors",
+                  "flex items-center gap-3 px-3 py-2 text-sm t-base",
                   isActive ? "text-ink" : "text-faint hover:text-ink",
                 )}
               >
@@ -29,7 +29,7 @@ export function ProjectTabs({ active }: { active: ProjectSlug | null }) {
                 <span>{p.name}</span>
                 <span
                   aria-hidden
-                  className={cn("h-px transition-all duration-500", isActive ? "w-5 bg-accent" : "w-0 bg-line-strong")}
+                  className={cn("h-px t-slow", isActive ? "w-5 bg-accent" : "w-0 bg-line-strong")}
                 />
               </a>
             </li>

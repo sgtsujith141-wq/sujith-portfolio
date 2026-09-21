@@ -79,10 +79,10 @@ export function CaseStudyView({ project }: { project: Project }) {
       <nav aria-label="More work" className="grid gap-px border-t border-line-soft bg-line-soft sm:grid-cols-2">
         <Link
           href={`/work/${prev.slug}`}
-          className="group flex items-center gap-4 bg-base p-7 transition-colors hover:bg-surface"
+          className="group flex items-center gap-4 bg-base p-7 t-base hover:bg-surface"
         >
           <ArrowLeft
-            className="h-4 w-4 shrink-0 text-faint transition-transform group-hover:-translate-x-1"
+            className="h-4 w-4 shrink-0 text-faint t-base group-hover:-translate-x-1"
             aria-hidden
           />
           <span>
@@ -92,14 +92,14 @@ export function CaseStudyView({ project }: { project: Project }) {
         </Link>
         <Link
           href={`/work/${next.slug}`}
-          className="group flex items-center justify-end gap-4 bg-base p-7 text-right transition-colors hover:bg-surface"
+          className="group flex items-center justify-end gap-4 bg-base p-7 text-right t-base hover:bg-surface"
         >
           <span>
             <span className="label">Next</span>
             <span className="display mt-2 block text-xl text-ink">{next.name}</span>
           </span>
           <ArrowRight
-            className="h-4 w-4 shrink-0 text-faint transition-transform group-hover:translate-x-1"
+            className="h-4 w-4 shrink-0 text-faint t-base group-hover:translate-x-1"
             aria-hidden
           />
         </Link>

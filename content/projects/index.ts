@@ -1,4 +1,5 @@
 import type { Project, ProjectSlug } from "@/lib/types";
+import { phantomHq } from "./phantom-hq";
 import { homeLab } from "./home-lab";
 import { cryptodrishti } from "./cryptodrishti";
 import { surakshascore } from "./surakshascore";
@@ -9,15 +10,13 @@ import { aetherHealth } from "./aether-health";
  *  actually lives in; the MVP sits after SurakshaScore because it is told
  *  as that project's origin story. */
 export const projects: Project[] = [
+  phantomHq,
   homeLab,
   cryptodrishti,
   surakshascore,
   surakshascoreMvp,
   aetherHealth,
 ];
-
-/** The three shown on the home page's teaser, in this order. */
-export const featuredSlugs = ["home-lab", "cryptodrishti", "surakshascore"] as const;
 
 export const projectBySlug = Object.fromEntries(projects.map((p) => [p.slug, p])) as Record<
   ProjectSlug,
@@ -26,12 +25,13 @@ export const projectBySlug = Object.fromEntries(projects.map((p) => [p.slug, p])
 
 export const statusMeta: Record<
   Project["status"],
-  { label: string; tone: "accent" | "warn" | "muted" | "ok" }
+  { label: string; tone: "accent" | "warn" | "muted" | "ok" | "signal" }
 > = {
+  building: { label: "Building it now", tone: "accent" },
   active: { label: "Active", tone: "accent" },
   running: { label: "Running at home", tone: "ok" },
   prototype: { label: "Prototype", tone: "warn" },
   archived: { label: "Archived prototype", tone: "muted" },
 };
 
-export { homeLab, cryptodrishti, surakshascore, surakshascoreMvp, aetherHealth };
+export { phantomHq, homeLab, cryptodrishti, surakshascore, surakshascoreMvp, aetherHealth };

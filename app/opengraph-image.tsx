@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { profile } from "@/content/profile";
+import { profile, tagline } from "@/content/personal";
 
 export const alt = `${profile.name} — ${profile.role}`;
 export const size = { width: 1200, height: 630 };
@@ -40,13 +40,13 @@ export default function OpenGraphImage() {
         </svg>
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "72px 80px" }}>
           <div style={{ fontSize: 22, letterSpacing: 6, color: "#7d8799", textTransform: "uppercase" }}>
-            The Living System
+            Portfolio
           </div>
           <div style={{ fontSize: 118, fontWeight: 600, letterSpacing: -4, marginTop: 12, lineHeight: 1 }}>
             {profile.displayName}
           </div>
           <div style={{ fontSize: 30, color: "#a3adbf", marginTop: 26, maxWidth: 760 }}>
-            {`${profile.role}. ${profile.statement}`}
+            {`${profile.role}, BMSIT. ${tagline}`}
           </div>
         </div>
       </div>

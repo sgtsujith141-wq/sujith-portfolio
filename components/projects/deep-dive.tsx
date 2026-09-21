@@ -11,7 +11,7 @@ export function DeepDive({ project }: { project: Project }) {
           <span className="label text-ink">Engineering deep dive</span>
           <span className="text-xs text-faint">verification log · {project.verification.length} claims</span>
         </span>
-        <span aria-hidden className="mono text-[11px] text-faint transition-transform group-open:rotate-45">+</span>
+        <span aria-hidden className="mono text-[11px] text-faint t-base group-open:rotate-45">+</span>
       </summary>
       <div className="overflow-x-auto border-t border-line-soft">
         <table className="w-full min-w-[640px] text-left text-sm">

@@ -4,6 +4,7 @@ import { useRef, type ReactNode } from "react";
 import { motion, useMotionValue, useSpring } from "motion/react";
 import { useFinePointer } from "@/hooks/use-media";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { SPRING } from "@/lib/motion";
 
 const LIMIT = 6;
 
@@ -14,8 +15,8 @@ export function Magnetic({ children }: { children: ReactNode }) {
   const reduced = useReducedMotion();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const sx = useSpring(x, { stiffness: 220, damping: 18, mass: 0.4 });
-  const sy = useSpring(y, { stiffness: 220, damping: 18, mass: 0.4 });
+  const sx = useSpring(x, SPRING.pointer);
+  const sy = useSpring(y, SPRING.pointer);
 
   const enabled = fine && !reduced;
 

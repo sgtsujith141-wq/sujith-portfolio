@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { sections } from "@/content/navigation";
-import { profile } from "@/content/profile";
+import { profile } from "@/content/personal";
 import { useActiveSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
 
@@ -69,8 +69,11 @@ export function NavRail() {
           {/* Progress line. */}
           <span aria-hidden className="absolute -right-3 top-0 h-full w-px bg-line">
             <span
-              className="absolute left-0 top-0 w-px bg-accent transition-[height] duration-300 ease-out"
-              style={{ height: `${progress * 100}%` }}
+              className="absolute left-0 top-0 h-full w-px origin-top bg-accent"
+              style={{
+                transform: `scaleY(${progress})`,
+                transition: "transform 240ms var(--ease-soft)",
+              }}
             />
           </span>
           {sections.map((s, i) => {
@@ -82,14 +85,15 @@ export function NavRail() {
                   href={`#${s.id}`}
                   aria-current={isActive ? "location" : undefined}
                   className={cn(
-                    "group flex items-center gap-3 py-1 pr-1 transition-colors",
+                    "group relative flex items-center gap-3 py-1 pr-1 t-base",
                     isActive ? "text-ink" : passed ? "text-muted hover:text-ink" : "text-faint hover:text-ink",
                   )}
                 >
                   <span
+                    aria-hidden
                     className={cn(
-                      "mono max-w-0 overflow-hidden whitespace-nowrap text-[11px] tracking-[0.14em] opacity-0 transition-all duration-500 ease-[var(--ease-out-expo)] group-hover:max-w-[200px] group-hover:opacity-100 group-focus-visible:max-w-[200px] group-focus-visible:opacity-100",
-                      isActive && "max-w-[200px] opacity-100",
+                      "mono t-width pointer-events-none absolute right-full mr-3 translate-x-1 whitespace-nowrap text-[11px] tracking-[0.14em] opacity-0 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100",
+                      isActive && "translate-x-0 opacity-100",
                     )}
                   >
                     {s.label.toUpperCase()}
@@ -98,7 +102,7 @@ export function NavRail() {
                   <span
                     aria-hidden
                     className={cn(
-                      "h-px transition-all duration-500 ease-[var(--ease-out-expo)]",
+                      "h-px t-slow",
                       isActive ? "w-6 bg-accent" : "w-3 bg-line-strong group-hover:w-5 group-hover:bg-muted",
                     )}
                   />

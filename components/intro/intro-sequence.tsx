@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { DecryptText } from "@/components/ui/decrypt-text";
 import { useLivingSystem } from "@/components/canvas/living-system";
-import { profile } from "@/content/profile";
+import { profile } from "@/content/personal";
 import { cn } from "@/lib/utils";
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -315,10 +315,10 @@ export function IntroSequence() {
               onClick={finish}
               animate={{ opacity: morph ? 0 : 1 }}
               transition={{ duration: 0.2 }}
-              className="group pointer-events-auto absolute bottom-6 right-6 flex items-center gap-2.5 px-2 py-1.5 text-faint transition-colors hover:text-ink sm:bottom-10 sm:right-10"
+              className="group pointer-events-auto absolute bottom-6 right-6 flex items-center gap-2.5 px-2 py-1.5 text-faint t-base hover:text-ink sm:bottom-10 sm:right-10"
             >
               <span className="label-sm">SKIP</span>
-              <kbd className="mono rounded-[2px] border border-line px-1.5 py-0.5 text-[9px] tracking-widest text-ghost transition-colors group-hover:border-accent/40 group-hover:text-accent">
+              <kbd className="mono rounded-[2px] border border-line px-1.5 py-0.5 text-[9px] tracking-widest text-ghost t-base group-hover:border-accent/40 group-hover:text-accent">
                 ESC
               </kbd>
             </motion.button>

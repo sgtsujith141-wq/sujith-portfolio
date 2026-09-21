@@ -20,10 +20,10 @@ export function WorkHeader() {
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 lg:px-12">
         <Link
           href="/"
-          className="group flex shrink-0 items-center gap-2.5 text-muted transition-colors hover:text-ink"
+          className="group flex shrink-0 items-center gap-2.5 text-muted t-base hover:text-ink"
         >
           <ArrowLeft
-            className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5"
+            className="h-3.5 w-3.5 t-base group-hover:-translate-x-0.5"
             aria-hidden
           />
           <span className="mono text-[11px] tracking-[0.18em]">SUJITH C</span>
@@ -36,7 +36,7 @@ export function WorkHeader() {
                 href="/work"
                 aria-current={pathname === "/work" ? "page" : undefined}
                 className={cn(
-                  "block px-3 py-1.5 text-[13px] transition-colors",
+                  "block px-3 py-1.5 text-[13px] t-base",
                   pathname === "/work" ? "text-ink" : "text-faint hover:text-ink",
                 )}
               >
@@ -51,7 +51,7 @@ export function WorkHeader() {
                     href={`/work/${p.slug}`}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 text-[13px] transition-colors",
+                      "flex items-center gap-2 px-3 py-1.5 text-[13px] t-base",
                       active ? "text-ink" : "text-faint hover:text-ink",
                     )}
                   >
@@ -60,7 +60,7 @@ export function WorkHeader() {
                     <span
                       aria-hidden
                       className={cn(
-                        "h-px transition-all duration-500",
+                        "h-px t-slow",
                         active ? "w-4 bg-accent" : "w-0 bg-line-strong",
                       )}
                     />

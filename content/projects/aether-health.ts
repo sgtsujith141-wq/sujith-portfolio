@@ -9,7 +9,7 @@ const shots = "/projects/aether-health";
 
 export const aetherHealth: Project = {
   slug: "aether-health",
-  index: "05",
+  index: "06",
   name: "Aether Health",
   tagline: "An AI-assisted personal health companion prototype.",
   category: "Health & AI prototype",

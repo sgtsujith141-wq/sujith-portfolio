@@ -7,13 +7,12 @@
  *  Engineering Evidence section can print its source and date.
  * ══════════════════════════════════════════════════════════════════════ */
 
-/** Home-page sections. Work now lives on its own route. */
+/** Home-page sections. Work lives on its own route. */
 export type SectionId =
   | "introduction"
   | "about"
-  | "network"
-  | "homelab"
-  | "exploring"
+  | "machines"
+  | "now"
   | "work"
   | "connect";
 
@@ -27,6 +26,7 @@ export interface NavSection {
 }
 
 export type ProjectSlug =
+  | "phantom-hq"
   | "home-lab"
   | "cryptodrishti"
   | "surakshascore"
@@ -92,7 +92,7 @@ export interface Architecture {
   edges: ArchEdge[];
 }
 
-export type ProjectStatus = "active" | "running" | "prototype" | "archived";
+export type ProjectStatus = "building" | "active" | "running" | "prototype" | "archived";
 
 export interface Project {
   slug: ProjectSlug;
@@ -123,43 +123,6 @@ export interface Project {
   visual?: "crypto" | "signals" | "evolution" | "aether" | "topology";
 }
 
-/* ── Personal identity ─────────────────────────────────────────────── */
-
-/** One domain in the personal network: a thing Sujith actually explores. */
-export interface Domain {
-  id: DomainId;
-  label: string;
-  /** One line, shown on the node when focused. */
-  summary: string;
-  /** What this means to him, in his own register. */
-  body: string;
-  /** Concrete, verifiable places this shows up. */
-  evidence: string[];
-  /** Project slugs this domain genuinely connects to. */
-  projects: ProjectSlug[];
-  /** Home-lab service ids this domain genuinely connects to. */
-  services: string[];
-  accent: "blue" | "cyan" | "violet" | "green" | "slate";
-}
-
-export type DomainId =
-  | "networking"
-  | "cybersecurity"
-  | "systems"
-  | "linux"
-  | "infrastructure"
-  | "ai"
-  | "software";
-
-/** A skill with an honest level. No percentages, no bars. */
-export interface SkillGroup {
-  id: string;
-  title: string;
-  level: string;
-  note: string;
-  items: string[];
-}
-
 /* ── Home lab ──────────────────────────────────────────────────────── */
 
 export type ServiceKind = "edge" | "overlay" | "host" | "platform" | "service";
@@ -181,8 +144,8 @@ export interface LabService {
   configured: string[];
   /** What running it taught him. */
   learned: string;
-  /** Domains this service demonstrates. */
-  domains: DomainId[];
+  /** Interest ids this service reflects, from content/personal.ts. */
+  domains: string[];
 }
 
 export interface EvidenceSnapshot {
@@ -201,10 +164,4 @@ export interface AboutBlock {
   body: string[];
 }
 
-export interface ExplorationTheme {
-  id: string;
-  title: string;
-  status: "active" | "planned";
-  detail: string;
-  threads: string[];
-}
+

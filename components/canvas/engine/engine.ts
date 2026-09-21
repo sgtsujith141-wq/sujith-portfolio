@@ -1,5 +1,5 @@
 import { graphNodes, graphEdges, type GraphKind } from "@/content/graph";
-import type { DomainId, ProjectSlug } from "@/lib/types";
+import type { ProjectSlug } from "@/lib/types";
 import { lerp, seeded } from "@/lib/utils";
 import {
   ambientTargets,
@@ -161,7 +161,7 @@ export class LivingSystemEngine {
   private progress = 0;
   private phase = 1;
   private focus: ProjectSlug | null = null;
-  private domain: DomainId | null = null;
+  private domain: string | null = null;
   private hover: string | null = null;
   private stage: Stage | null = null;
 
@@ -171,6 +171,7 @@ export class LivingSystemEngine {
   private flowTarget = 0.5;
   private routed = 0;
   private routedTarget = 0;
+  private quiet = false;
 
   private pointer = { x: 0, y: 0, on: false };
   private pointerEase = { x: 0, y: 0 };
@@ -268,8 +269,8 @@ export class LivingSystemEngine {
     }
   }
 
-  /** The signature section's selected domain. */
-  setDomain(id: DomainId | null) {
+  /** Which interest the About section is currently highlighting. */
+  setDomain(id: string | null) {
     if (id === this.domain) return;
     this.domain = id;
     this.retarget();
@@ -405,7 +406,7 @@ export class LivingSystemEngine {
   }
 
   private retarget() {
-    const { t, cam, mood, flow, routed } = formation(this.viewport(), {
+    const { t, cam, mood, flow, routed, quiet } = formation(this.viewport(), {
       name: this.intro ?? this.section,
       progress: this.progress,
       phase: this.phase,
@@ -443,6 +444,7 @@ export class LivingSystemEngine {
     this.moodTarget = mood;
     this.flowTarget = this.opts.lowPower ? flow * 0.4 : flow;
     this.routedTarget = routed;
+    this.quiet = quiet ?? false;
   }
 
   private snap() {
@@ -498,7 +500,9 @@ export class LivingSystemEngine {
       if (this.ignition > 0.55 && !this.pulses.length) this.pulses.push({ front: -0.2, life: 1 });
     }
 
-    const k = Math.min(1, 0.05 * dt);
+    // Camera and palette ease more slowly than the nodes, which is what
+    // stops a section change from reading as a cut.
+    const k = Math.min(1, 0.034 * dt);
     this.cam.zoom = lerp(this.cam.zoom, this.camTarget.zoom, k);
     this.cam.x = lerp(this.cam.x, this.camTarget.x, k);
     this.cam.y = lerp(this.cam.y, this.camTarget.y, k);
@@ -518,10 +522,13 @@ export class LivingSystemEngine {
     this.light.x = lerp(this.light.x, lx, Math.min(1, 0.045 * dt));
     this.light.y = lerp(this.light.y, ly, Math.min(1, 0.045 * dt));
 
-    const stiff = 0.03;
-    const damp = Math.pow(0.845, dt);
-    const drift = Math.min(this.w, this.h) * 0.006;
-    const cursorR = 190;
+    // Softer spring and a longer idle wander: at rest the field should
+    // look alive rather than parked, and a section change should settle
+    // rather than snap into place.
+    const stiff = 0.022;
+    const damp = Math.pow(0.87, dt);
+    const drift = Math.min(this.w, this.h) * 0.009;
+    const cursorR = 210;
 
     for (const n of this.nodes) {
       // Staged emergence: rings of the graph light up in turn.
@@ -529,9 +536,11 @@ export class LivingSystemEngine {
       const gx = lerp(this.w / 2, n.tx, gate);
       const gy = lerp(this.h / 2, n.ty, gate);
 
-      const wob = this.time * 0.0075 + n.phase;
-      const dx = gx + Math.cos(wob) * drift - n.x;
-      const dy = gy + Math.sin(wob * 0.82) * drift - n.y;
+      // Two frequencies rather than one, so the drift never reads as a
+      // loop the eye can follow.
+      const wob = this.time * 0.0052 + n.phase;
+      const dx = gx + Math.cos(wob) * drift + Math.cos(wob * 0.37) * drift * 0.5 - n.x;
+      const dy = gy + Math.sin(wob * 0.79) * drift + Math.sin(wob * 0.23) * drift * 0.4 - n.y;
       n.vx = (n.vx + dx * stiff * dt) * damp;
       n.vy = (n.vy + dy * stiff * dt) * damp;
       n.x += n.vx * dt;
@@ -548,7 +557,7 @@ export class LivingSystemEngine {
       n.e += (energy - n.e) * Math.min(1, 0.12 * dt);
       n.pulse *= Math.pow(0.955, dt);
 
-      const ease = Math.min(1, 0.062 * dt);
+      const ease = Math.min(1, 0.045 * dt);
       n.a += (n.ta * gate - n.a) * ease;
       n.la += (n.tla * gate - n.la) * ease;
       n.lit += (n.tlit - n.lit) * ease;
@@ -566,7 +575,7 @@ export class LivingSystemEngine {
       a.vy = (a.vy + dy * 0.021 * dt) * damp;
       a.x += a.vx * dt;
       a.y += a.vy * dt;
-      a.a += (a.ta * aGate - a.a) * Math.min(1, 0.05 * dt);
+      a.a += (a.ta * aGate - a.a) * Math.min(1, 0.038 * dt);
     }
 
     this.stepSignals(dt);
@@ -819,7 +828,7 @@ export class LivingSystemEngine {
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fill();
 
-      const la = Math.max(n.la, n.e * 0.85) * n.a;
+      const la = (this.quiet ? n.la : Math.max(n.la, n.e * 0.85)) * n.a;
       // Cull in screen space: the camera zoom and pan mean a node inside
       // the viewport can still render a label off the edge, or under the
       // navigation rail on the right.

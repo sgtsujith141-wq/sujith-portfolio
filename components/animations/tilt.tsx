@@ -5,6 +5,7 @@ import { motion, useMotionTemplate, useMotionValue, useSpring, useTransform } fr
 import { useFinePointer } from "@/hooks/use-media";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
+import { SPRING } from "@/lib/motion";
 
 /* ══════════════════════════════════════════════════════════════════════
  *  TILT
@@ -29,12 +30,12 @@ export function Tilt({ children, className }: { children: ReactNode; className?:
   const py = useMotionValue(0.5);
   const active = useMotionValue(0);
 
-  const spring = { stiffness: 180, damping: 20, mass: 0.4 };
+  const spring = SPRING.pointer;
   const rx = useSpring(useTransform(py, [0, 1], [MAX, -MAX]), spring);
   const ry = useSpring(useTransform(px, [0, 1], [-MAX, MAX]), spring);
   const sheenX = useTransform(px, (v) => `${v * 100}%`);
   const sheenY = useTransform(py, (v) => `${v * 100}%`);
-  const sheenOpacity = useSpring(active, { stiffness: 120, damping: 22 });
+  const sheenOpacity = useSpring(active, SPRING.panel);
   const sheen = useMotionTemplate`radial-gradient(45% 55% at ${sheenX} ${sheenY}, rgba(124,156,255,0.13), transparent 70%)`;
 
   return (

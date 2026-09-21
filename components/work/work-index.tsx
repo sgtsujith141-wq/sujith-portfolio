@@ -12,6 +12,7 @@ import { MaskLine } from "@/components/animations/mask-reveal";
 import { StatusPill } from "@/components/ui/status-pill";
 import { useDesktop } from "@/hooks/use-media";
 import { cn } from "@/lib/utils";
+import { DUR, EASE_OUT } from "@/lib/motion";
 
 /* ══════════════════════════════════════════════════════════════════════
  *  THE WORK INDEX
@@ -62,17 +63,17 @@ export function WorkIndex() {
                     href={`/work/${p.slug}`}
                     onFocus={() => setActive(p.slug)}
                     onBlur={() => setActive(null)}
-                    className="group block py-7 transition-colors lg:py-8"
+                    className="group block py-7 t-base lg:py-8"
                   >
                     <div className="flex items-baseline gap-4 lg:gap-6">
                       <span className="mono shrink-0 text-[11px] tracking-[0.2em] text-ghost">
                         {p.index}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <h2 className="display text-[clamp(1.7rem,4.2vw,2.9rem)] leading-none text-muted transition-colors duration-300 group-hover:text-ink">
+                        <h2 className="display text-[clamp(1.7rem,4.2vw,2.9rem)] leading-none text-muted t-base group-hover:text-ink">
                           <MaskLine>{p.name}</MaskLine>
                         </h2>
-                        <p className="mt-3 max-w-xl text-sm leading-relaxed text-faint transition-colors duration-300 group-hover:text-muted">
+                        <p className="mt-3 max-w-xl text-sm leading-relaxed text-faint t-base group-hover:text-muted">
                           {p.tagline}
                         </p>
                         <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -85,7 +86,7 @@ export function WorkIndex() {
                         </div>
                       </div>
                       <ArrowUpRight
-                        className="mt-1 h-5 w-5 shrink-0 text-ghost transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent-soft"
+                        className="mt-1 h-5 w-5 shrink-0 text-ghost t-base group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent-soft"
                         aria-hidden
                       />
                     </div>
@@ -106,7 +107,7 @@ export function WorkIndex() {
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ duration: DUR.base, ease: EASE_OUT }}
                   className="hairline h-full overflow-hidden bg-surface"
                 >
                   <div className="flex items-center justify-between border-b border-line-soft px-4 py-3">

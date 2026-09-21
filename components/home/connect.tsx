@@ -1,5 +1,5 @@
 import { ArrowUpRight, FileText, Mail, Phone } from "lucide-react";
-import { profile } from "@/content/profile";
+import { profile } from "@/content/personal";
 import { Reveal } from "@/components/animations/reveal";
 import { MaskLine } from "@/components/animations/mask-reveal";
 import { Magnetic } from "@/components/animations/magnetic";
@@ -67,7 +67,7 @@ export function Connect() {
       <div className="mx-auto w-full max-w-6xl">
         <Reveal>
           <p className="label flex items-center gap-3">
-            <span className="text-accent">07</span>
+            <span className="text-accent">06</span>
             <span aria-hidden className="h-px w-6 bg-line-strong" />
             <span>Connect</span>
           </p>
@@ -83,9 +83,8 @@ export function Connect() {
         </h2>
         <Reveal delay={0.24}>
           <p className="mt-8 max-w-xl text-lg text-muted">
-            Open to conversations about networking, infrastructure, security tooling and practical
-            software. The fastest route is email; the lab and the repositories are the best
-            introduction.
+Happy to talk about networking, security, servers or anything I&rsquo;ve built. Email is
+            the fastest way to reach me.
           </p>
         </Reveal>
 
@@ -97,12 +96,12 @@ export function Connect() {
                     href={l.href}
                     target={l.external ? "_blank" : undefined}
                     rel={l.external ? "noreferrer" : undefined}
-                    className="group flex h-full min-h-[132px] flex-col justify-between p-6 transition-colors hover:bg-surface focus-visible:bg-surface"
+                    className="group flex h-full min-h-[132px] flex-col justify-between p-6 t-base hover:bg-surface focus-visible:bg-surface"
                   >
                     <span className="flex items-center justify-between">
                       <span className="label group-hover:text-ink">{l.label}</span>
                       <l.icon
-                        className="h-4 w-4 text-faint transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent-soft"
+                        className="h-4 w-4 text-faint t-base group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent-soft"
                         aria-hidden
                       />
                     </span>

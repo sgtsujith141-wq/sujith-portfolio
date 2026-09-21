@@ -44,7 +44,7 @@ export function Action({
         target={external ? "_blank" : undefined}
         rel={external ? "noreferrer" : undefined}
         className={cn(
-          "group inline-flex items-center gap-2.5 px-5 py-3 text-sm font-medium transition-colors duration-300",
+          "group inline-flex items-center gap-2.5 px-5 py-3 text-sm font-medium t-base",
           styles[variant],
           className,
         )}
@@ -54,7 +54,7 @@ export function Action({
           <Icon
             aria-hidden
             className={cn(
-              "h-4 w-4 transition-transform duration-300",
+              "h-4 w-4 t-base",
               icon === "arrow" && "group-hover:-translate-y-0.5 group-hover:translate-x-0.5",
               icon === "down" && "group-hover:translate-y-0.5",
             )}

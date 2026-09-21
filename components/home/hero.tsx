@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "motion/react";
-import { profile } from "@/content/profile";
+import { profile, tagline, about, interests } from "@/content/personal";
 import { Action } from "@/components/ui/action";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
@@ -61,7 +61,7 @@ export function Hero() {
           style={delay(180)}
           className="display mt-8 max-w-3xl text-[clamp(1.35rem,3.4vw,2.6rem)] leading-[1.15] text-muted"
         >
-          Exploring networks, securing systems, and building things that{" "}
+          {tagline.replace(/ matter\.$/, " ")}
           <span className="text-ink">matter</span>.
         </p>
 
@@ -83,7 +83,7 @@ export function Hero() {
               style={delay(380)}
               className="mt-5 max-w-xl text-base leading-relaxed text-muted sm:text-lg"
             >
-              {profile.statement}
+              {about[1]}
             </p>
           </div>
 
@@ -96,12 +96,12 @@ export function Hero() {
             <span data-enter style={delay(580)}>
               <Link
                 href="/work"
-                className="group inline-flex items-center gap-2.5 border border-line-strong bg-base/40 px-5 py-3 text-sm font-medium text-ink transition-[color,border-color] duration-300 hover:border-accent-soft hover:text-accent-soft"
+                className="group inline-flex items-center gap-2.5 border border-line-strong bg-base/40 px-5 py-3 text-sm font-medium text-ink t-base hover:border-accent-soft hover:text-accent-soft"
               >
                 See my work
                 <span
                   aria-hidden
-                  className="transition-transform duration-300 group-hover:translate-x-0.5"
+                  className="t-base group-hover:translate-x-0.5"
                 >
                   →
                 </span>
@@ -128,10 +128,12 @@ export function Hero() {
           className="mt-14 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-line-soft pt-6"
           aria-label="What I enjoy"
         >
-          {profile.interests.map((t, i) => (
-            <li key={t} className="flex items-center gap-5">
+          {interests.map((t, i) => (
+            <li key={t.id} className="flex items-center gap-5">
               {i > 0 ? <span aria-hidden className="h-1 w-1 rounded-full bg-ghost" /> : null}
-              <span className="mono text-[11px] tracking-[0.16em] text-faint">{t.toUpperCase()}</span>
+              <span className="mono text-[11px] tracking-[0.16em] text-faint">
+                {t.label.toUpperCase()}
+              </span>
             </li>
           ))}
         </ul>
@@ -147,7 +149,7 @@ export function Hero() {
         <span className="relative block h-12 w-px overflow-hidden bg-line">
           <span className="absolute inset-x-0 top-0 h-1/2 bg-accent animate-scroll-cue" />
         </span>
-        <span className="label transition-colors group-hover:text-ink">Scroll</span>
+        <span className="label t-base group-hover:text-ink">Scroll</span>
       </a>
     </section>
   );

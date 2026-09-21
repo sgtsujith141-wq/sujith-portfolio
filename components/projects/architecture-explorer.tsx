@@ -92,7 +92,7 @@ export function ArchitectureExplorer() {
               setPinned(null);
             }}
             className={cn(
-              "mono border px-3 py-1.5 text-[11px] tracking-[0.12em] transition-colors",
+              "mono border px-3 py-1.5 text-[11px] tracking-[0.12em] t-base",
               p.slug === slug ? "border-accent/50 text-ink" : "border-line text-faint hover:border-line-strong hover:text-ink",
             )}
           >
@@ -187,7 +187,7 @@ export function ArchitectureExplorer() {
                     onBlur={() => setActive(null)}
                     onClick={() => setPinned((p) => (p === n.id ? null : n.id))}
                     className={cn(
-                      "flex h-full w-full items-center justify-between border bg-base px-3 text-left transition-all duration-300",
+                      "flex h-full w-full items-center justify-between border bg-base px-3 text-left t-base",
                       isActive
                         ? "border-signal text-ink ring-accent"
                         : isConnected

@@ -13,7 +13,7 @@ import {
 import { usePathname } from "next/navigation";
 import { MotionConfig } from "motion/react";
 import { sectionIds } from "@/content/navigation";
-import type { DomainId, ProjectSlug, SectionId } from "@/lib/types";
+import type { ProjectSlug, SectionId } from "@/lib/types";
 import type { FormationName } from "./engine/formations";
 import type { LivingSystemEngine } from "./engine/engine";
 
@@ -38,7 +38,7 @@ interface LivingSystemApi {
   ready: boolean;
   ignite: () => void;
   setFocus: (slug: ProjectSlug | null) => void;
-  setDomain: (id: DomainId | null) => void;
+  setDomain: (id: string | null) => void;
   setHover: (id: string | null) => void;
   /** Element whose rectangle the active formation should fill; null releases. */
   setStage: (el: HTMLElement | null) => void;

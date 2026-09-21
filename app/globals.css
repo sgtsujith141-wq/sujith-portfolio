@@ -35,9 +35,11 @@
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
+  /* The motion system's curves. lib/motion.ts holds the same three for
+   * JavaScript-driven animation, so a hover and a Motion tween agree. */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
-  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
 
   --breakpoint-xs: 30rem;
 }
@@ -112,6 +114,35 @@
 }
 
 @layer utilities {
+  /* ── Transitions ──────────────────────────────────────────────────
+   * Three speeds, one curve, and an explicit property list. Nothing on
+   * this site uses `transition-all`: it animates layout properties too,
+   * which is where most of the jank was coming from.
+   * ---------------------------------------------------------------- */
+  .t-fast,
+  .t-base,
+  .t-slow {
+    transition-property: color, background-color, border-color, fill, stroke, opacity,
+      box-shadow, transform;
+    transition-timing-function: var(--ease-soft);
+  }
+  .t-fast {
+    transition-duration: 220ms;
+  }
+  .t-base {
+    transition-duration: 420ms;
+  }
+  .t-slow {
+    transition-duration: 620ms;
+    transition-timing-function: var(--ease-out-expo);
+  }
+  /* For the one case that has to animate a size: the rail's label. */
+  .t-width {
+    transition:
+      opacity 420ms var(--ease-out-expo),
+      transform 620ms var(--ease-out-expo);
+  }
+
   /* Display type: wide-set Archivo with tight tracking. */
   .display {
     font-family: var(--font-display);
@@ -330,6 +361,24 @@ html[data-intro="morphing"] [data-enter] {
 }
 .animate-pulse-dot {
   animation: pulse-dot 2.4s var(--ease-in-out-quart) infinite;
+}
+
+/* The server breathing. One transform, compositor-only. */
+@keyframes server-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+.server-breathe {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: server-breathe 6s var(--ease-in-out-quart) infinite;
 }
 
 @keyframes scroll-cue {

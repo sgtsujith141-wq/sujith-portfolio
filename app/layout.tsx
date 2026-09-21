@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Geist, Geist_Mono } from "next/font/google";
-import { profile } from "@/content/profile";
+import { profile } from "@/content/personal";
 import { LivingSystem } from "@/components/canvas/living-system";
 import { SkipLink } from "@/components/layout/skip-link";
 import { Footer } from "@/components/layout/footer";

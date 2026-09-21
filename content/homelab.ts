@@ -99,7 +99,7 @@ export const services: LabService[] = [
     ],
     learned:
       "Real terminal work rather than tutorial commands: the filesystem layout, permissions and ownership, how services get started and kept running, reading logs when something refuses to start, and mounting storage so it survives a reboot.",
-    domains: ["linux", "systems"],
+    domains: ["operating-systems", "systems"],
   },
   {
     id: "casaos",
@@ -119,7 +119,7 @@ export const services: LabService[] = [
     ],
     learned:
       "How a service layer sits above the OS, what it is actually abstracting away, and where that abstraction stops — when something breaks, the fix is still on the Debian side.",
-    domains: ["infrastructure", "systems"],
+    domains: ["servers", "systems"],
   },
   {
     id: "jellyfin",
@@ -139,7 +139,7 @@ export const services: LabService[] = [
     ],
     learned:
       "That streaming is a resource problem, not a magic one — transcoding is CPU work, and a library that plays fine on one device may need re-encoding for another.",
-    domains: ["infrastructure"],
+    domains: ["servers"],
   },
   {
     id: "storage",
@@ -158,7 +158,7 @@ export const services: LabService[] = [
     ],
     learned:
       "Linux mounting and permissions in a way that finally stuck, plus the practical difference between a share being reachable and a share being writable.",
-    domains: ["infrastructure", "systems"],
+    domains: ["servers", "systems"],
   },
   {
     id: "minecraft",
@@ -178,7 +178,7 @@ export const services: LabService[] = [
     ],
     learned:
       "Resource limits are real — a Java process with the wrong heap settings will take the whole machine with it. Also that “it works on my machine” means nothing once someone else has to connect.",
-    domains: ["infrastructure", "networking"],
+    domains: ["servers", "networking"],
   },
 ];
 

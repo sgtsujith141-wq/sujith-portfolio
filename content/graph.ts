@@ -1,6 +1,6 @@
-import { domains } from "./identity";
+import { interests } from "./personal";
 import { services } from "./homelab";
-import type { DomainId, ProjectSlug } from "@/lib/types";
+import type { ProjectSlug } from "@/lib/types";
 
 /* ══════════════════════════════════════════════════════════════════════
  *  THE LIVING SYSTEM GRAPH
@@ -25,7 +25,7 @@ export interface GraphNode {
   id: string;
   label: string;
   kind: GraphKind;
-  domain: DomainId | null;
+  domain: string | null;
   project: ProjectSlug | null;
   /** Relative visual weight 0.35–1. Drives radius and label priority. */
   weight: number;
@@ -40,7 +40,7 @@ const N = (
   id: string,
   label: string,
   kind: GraphKind,
-  domain: DomainId | null,
+  domain: string | null,
   project: ProjectSlug | null,
   weight = 0.55,
 ): GraphNode => ({ id, label, kind, domain, project, weight });
@@ -49,8 +49,8 @@ const N = (
 
 const rootNode: GraphNode = N("sujith", "SUJITH C", "root", null, null, 1);
 
-/** The seven domains, straight from the identity model. */
-const domainNodes: GraphNode[] = domains.map((d) =>
+/** The seven things he enjoys, straight from content/personal.ts. */
+const domainNodes: GraphNode[] = interests.map((d) =>
   N(d.id, d.label, "domain", d.id, null, 0.88),
 );
 
@@ -60,15 +60,16 @@ const serviceNodes: GraphNode[] = services.map((s) =>
     `svc-${s.id}`,
     s.label,
     "service",
-    s.domains[0] ?? "infrastructure",
+    s.domains[0] ?? "servers",
     "home-lab",
     s.kind === "host" || s.kind === "platform" ? 0.72 : 0.6,
   ),
 );
 
 const projectNodes: GraphNode[] = [
-  N("p-home-lab", "Home Lab", "project", "infrastructure", "home-lab", 0.92),
-  N("p-cryptodrishti", "CryptoDrishti", "project", "software", "cryptodrishti", 0.92),
+  N("p-phantom-hq", "Phantom HQ", "project", "ai", "phantom-hq", 0.9),
+  N("p-home-lab", "Home Lab", "project", "servers", "home-lab", 0.92),
+  N("p-cryptodrishti", "CryptoDrishti", "project", "cybersecurity", "cryptodrishti", 0.92),
   N("p-surakshascore", "SurakshaScore", "project", "cybersecurity", "surakshascore", 0.92),
   N("p-surakshascore-mvp", "SurakshaScore MVP", "project", "cybersecurity", "surakshascore-mvp", 0.68),
   N("p-aether-health", "Aether Health", "project", "ai", "aether-health", 0.82),
@@ -77,29 +78,29 @@ const projectNodes: GraphNode[] = [
 /** Technologies, attached to the project that actually uses them. */
 const techNodes: GraphNode[] = [
   N("t-wireguard", "WireGuard", "tech", "networking", "home-lab", 0.5),
-  N("t-nat", "NAT & addressing", "tech", "networking", "home-lab", 0.45),
-  N("t-terminal", "Terminal", "tech", "linux", "home-lab", 0.45),
-  N("t-permissions", "Permissions", "tech", "linux", "home-lab", 0.42),
-  N("t-containers", "Containers", "tech", "infrastructure", "home-lab", 0.45),
-  N("t-python", "Python", "tech", "software", "cryptodrishti", 0.55),
-  N("t-fastapi", "FastAPI", "tech", "software", "cryptodrishti", 0.42),
-  N("t-cyclonedx", "CycloneDX 1.6", "tech", "software", "cryptodrishti", 0.48),
-  N("t-typescript", "TypeScript", "tech", "software", "surakshascore", 0.52),
-  N("t-react", "React", "tech", "software", "surakshascore", 0.45),
+  N("t-nat", "Addressing", "tech", "networking", "home-lab", 0.45),
+  N("t-terminal", "Terminal", "tech", "operating-systems", "home-lab", 0.45),
+  N("t-permissions", "Permissions", "tech", "operating-systems", "home-lab", 0.42),
+  N("t-containers", "Containers", "tech", "servers", "home-lab", 0.45),
+  N("t-python", "Python", "tech", "ai", "cryptodrishti", 0.55),
+  N("t-fastapi", "FastAPI", "tech", "ai", "cryptodrishti", 0.42),
+  N("t-cyclonedx", "CycloneDX 1.6", "tech", "cybersecurity", "cryptodrishti", 0.48),
+  N("t-typescript", "TypeScript", "tech", "ai", "surakshascore", 0.52),
+  N("t-react", "React", "tech", "ai", "surakshascore", 0.45),
   N("t-kanon", "k-anonymity", "tech", "cybersecurity", "surakshascore", 0.45),
   N("t-webcrypto", "Web Crypto", "tech", "cybersecurity", "surakshascore-mvp", 0.42),
-  N("t-express", "Express", "tech", "software", "aether-health", 0.42),
+  N("t-express", "Express", "tech", "ai", "aether-health", 0.42),
   N("t-gemini", "Gemini API", "tech", "ai", "aether-health", 0.45),
 ];
 
 const evidenceNodes: GraphNode[] = [
-  N("e-226", "226 tests", "evidence", "software", "cryptodrishti", 0.55),
-  N("e-ci-py", "CI 3.11–3.13", "evidence", "software", "cryptodrishti", 0.45),
-  N("e-107", "107 tests", "evidence", "software", "surakshascore", 0.55),
-  N("e-isolation", "Isolation test", "evidence", "software", "surakshascore", 0.45),
-  N("e-build", "Client + server build", "evidence", "software", "aether-health", 0.42),
-  N("e-typecheck", "Typecheck pass", "evidence", "software", "surakshascore-mvp", 0.4),
-  N("e-uptime", "4 services, 1 node", "evidence", "infrastructure", "home-lab", 0.45),
+  N("e-226", "226 tests", "evidence", "cybersecurity", "cryptodrishti", 0.55),
+  N("e-ci-py", "CI 3.11–3.13", "evidence", "cybersecurity", "cryptodrishti", 0.45),
+  N("e-107", "107 tests", "evidence", "cybersecurity", "surakshascore", 0.55),
+  N("e-isolation", "Isolation test", "evidence", "cybersecurity", "surakshascore", 0.45),
+  N("e-build", "Client + server build", "evidence", "ai", "aether-health", 0.42),
+  N("e-typecheck", "Typecheck pass", "evidence", "cybersecurity", "surakshascore-mvp", 0.4),
+  N("e-uptime", "4 services, 1 node", "evidence", "servers", "home-lab", 0.45),
 ];
 
 export const graphNodes: GraphNode[] = [
@@ -116,12 +117,14 @@ export const graphNodes: GraphNode[] = [
 const E = (from: string, to: string): GraphEdge => ({ from, to });
 
 const edges: GraphEdge[] = [
-  // Sujith sits at the centre of his own domains.
-  ...domains.map((d) => E("sujith", d.id)),
+  // Sujith sits at the centre of the things he enjoys.
+  ...interests.map((d) => E("sujith", d.id)),
 
-  // Each domain reaches the projects and services it genuinely touches.
-  ...domains.flatMap((d) => d.projects.map((slug) => E(d.id, `p-${slug}`))),
-  ...domains.flatMap((d) => d.services.map((svc) => E(d.id, `svc-${svc}`))),
+  // An interest reaches whatever carries its tag. Derived, so nothing
+  // here can claim a connection the content does not already state.
+  ...graphNodes
+    .filter((n) => n.domain && n.kind !== "domain" && n.kind !== "root")
+    .map((n) => E(n.domain as string, n.id)),
 
   // The lab's own topology, parent by parent.
   ...services.filter((s) => s.parent).map((s) => E(`svc-${s.parent}`, `svc-${s.id}`)),
@@ -134,11 +137,12 @@ const edges: GraphEdge[] = [
   // The rebuild lineage.
   E("p-surakshascore-mvp", "p-surakshascore"),
 
-  // A few cross-links that are true and make the field feel woven.
+  // A few cross-links that keep the field woven.
   E("networking", "cybersecurity"),
-  E("linux", "systems"),
-  E("infrastructure", "linux"),
-  E("software", "cybersecurity"),
+  E("operating-systems", "systems"),
+  E("servers", "operating-systems"),
+  E("tinkering", "systems"),
+  E("ai", "tinkering"),
 ];
 
 /** Deduplicated, and with any edge pointing at a missing node dropped. */
@@ -161,8 +165,8 @@ export const graphNodeById = Object.fromEntries(graphNodes.map((n) => [n.id, n])
   GraphNode
 >;
 
-/** Node ids belonging to one domain, including what it connects to. */
-export function domainSubgraph(id: DomainId): Set<string> {
+/** Node ids belonging to one interest, including what it connects to. */
+export function domainSubgraph(id: string): Set<string> {
   const out = new Set<string>([id]);
   for (const e of graphEdges) {
     if (e.from === id) out.add(e.to);
@@ -172,4 +176,4 @@ export function domainSubgraph(id: DomainId): Set<string> {
   return out;
 }
 
-export const domainIds: DomainId[] = domains.map((d) => d.id);
+export const domainIds: string[] = interests.map((d) => d.id);
