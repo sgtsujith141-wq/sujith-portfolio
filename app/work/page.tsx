@@ -1,58 +1,64 @@
 import type { Metadata } from "next";
-import { projects } from "@/content/projects";
+import { projectBySlug } from "@/content/projects";
 import { WorkHeader } from "@/components/work/work-header";
-import { WorkIndex } from "@/components/work/work-index";
-import { Evidence } from "@/components/work/evidence";
+import { WorkIntro } from "@/components/work/work-intro";
+import { FeaturedWide, FeaturedPhones } from "@/components/work/featured-project";
+import { OtherWork } from "@/components/work/other-work";
 import { Reveal } from "@/components/animations/reveal";
-import { MaskLine } from "@/components/animations/mask-reveal";
 
 export const metadata: Metadata = {
   title: "Work",
   description:
-    "Five projects: a Debian home lab, a cryptographic discovery tool, a digital hygiene scanner and its prototype, and an AI-assisted health companion — each with verified engineering evidence.",
+    "CryptoDrishti and SurakshaScore, plus a Debian home lab, an AI health prototype, an earlier SurakshaScore build and an ongoing local-first AI project.",
 };
 
+/* Two levels, deliberately. The two featured projects get a full
+ * composition each; everything else is a considered list. The
+ * engineering evidence that used to fill half this page now lives
+ * inside the case study it belongs to. */
 export default function WorkPage() {
+  const featured = [projectBySlug["cryptodrishti"], projectBySlug["surakshascore"]];
+  const other = [
+    projectBySlug["home-lab"],
+    projectBySlug["aether-health"],
+    projectBySlug["surakshascore-mvp"],
+    projectBySlug["phantom-hq"],
+  ];
+
   return (
     <>
       <WorkHeader />
       <main id="main" className="relative z-[1] pt-14">
-        <section
-          aria-labelledby="work-index-title"
-          className="flex min-h-[70dvh] flex-col justify-center px-6 py-24 lg:px-12"
-        >
-          <div className="mx-auto w-full max-w-6xl">
-            <p data-enter="rise" style={{ "--enter-delay": "200ms" } as React.CSSProperties} className="label flex items-center gap-3">
-              <span className="text-accent">Work</span>
-              <span aria-hidden className="h-px w-6 bg-line-strong" />
-              <span>{projects.length} projects</span>
-            </p>
-            <h1
-              id="work-index-title"
-              className="display mt-8 max-w-4xl text-[clamp(2.6rem,8vw,6.4rem)] leading-[1] text-ink"
-            >
-              <MaskLine inView={false} delay={0.32}>
-                Built, verified,
-              </MaskLine>
-              <MaskLine inView={false} delay={0.44}>
-                still running.
-              </MaskLine>
-            </h1>
-            <Reveal delay={0.5}>
-              <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted">
-                One of these is a machine in my house rather than a repository. The other four are
-                public on GitHub. Every figure below carries the date and the method by which it was
-                checked.
-              </p>
+        <WorkIntro count={featured.length + other.length} />
+
+        <section aria-labelledby="featured-title" className="px-6 lg:px-12">
+          <div className="mx-auto max-w-6xl">
+            <Reveal>
+              <h2 id="featured-title" className="label border-b border-line-soft pb-4">
+                Featured work
+              </h2>
             </Reveal>
+            <div className="mt-16 space-y-28 lg:mt-20 lg:space-y-40">
+              <FeaturedWide project={featured[0]!} index="01" />
+              <FeaturedPhones project={featured[1]!} index="02" />
+            </div>
           </div>
         </section>
 
-        <WorkIndex />
+        <section aria-labelledby="other-title" className="mt-32 px-6 lg:mt-44 lg:px-12">
+          <div className="mx-auto max-w-6xl">
+            <Reveal>
+              <h2 id="other-title" className="label border-b border-line-soft pb-4">
+                Other work &amp; experiments
+              </h2>
+            </Reveal>
+            <div className="mt-14">
+              <OtherWork projects={other.filter(Boolean)} />
+            </div>
+          </div>
+        </section>
 
-        <div className="mt-24 border-t border-line-soft">
-          <Evidence />
-        </div>
+        <div className="h-32 lg:h-44" />
       </main>
     </>
   );

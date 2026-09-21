@@ -17,7 +17,7 @@ import type { Project } from "@/lib/types";
 
 export const phantomHq: Project = {
   slug: "phantom-hq",
-  index: "01",
+  index: "06",
   name: "Phantom HQ",
   tagline:
     "A local-first AI workspace I'm building: a persistent assistant, agents that do the work, and a dashboard to watch it from.",
