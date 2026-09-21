@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { about, interests, skills, skillsNote } from "@/content/personal";
 import { useLivingSystem } from "@/components/canvas/living-system";
 import { Reveal } from "@/components/animations/reveal";
 import { MaskLine } from "@/components/animations/mask-reveal";
 import { SectionHeader } from "@/components/ui/section-header";
 import { cn } from "@/lib/utils";
+import { DUR, EASE_OUT } from "@/lib/motion";
 
 const ACCENT: Record<string, string> = {
   blue: "#4f7cff",
@@ -50,10 +52,10 @@ export function About() {
       <div className="mx-auto max-w-6xl">
         <SectionHeader index="02" label="About" title={<span id="about-title">A bit about me.</span>} />
 
-        <div className="mt-12 max-w-2xl">
+        <div className="mt-12 max-w-2xl space-y-6">
           {about.map((p, i) => (
             <Reveal key={i} delay={i * 0.07}>
-              <p className="mb-5 text-[17px] leading-relaxed text-muted last:mb-0">{p}</p>
+              <p className="text-[17px] leading-relaxed text-muted">{p}</p>
             </Reveal>
           ))}
         </div>
@@ -95,14 +97,21 @@ export function About() {
           </div>
 
           {/* The note for whichever is active, plus the window the field fills. */}
-          <div className="lg:col-span-5">
-            <div ref={stageRef} aria-hidden className="hidden h-40 lg:block" />
-            <p
-              aria-live="polite"
-              className="max-w-sm text-[15px] leading-relaxed text-muted t-base lg:mt-6"
-            >
-              {current.note}
-            </p>
+          <div className="lg:col-span-5 lg:pt-12">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={current.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: DUR.base, ease: EASE_OUT }}
+                aria-live="polite"
+                className="max-w-sm text-[15px] leading-relaxed text-muted"
+              >
+                {current.note}
+              </motion.p>
+            </AnimatePresence>
+            <div ref={stageRef} aria-hidden className="mt-10 hidden h-48 lg:block" />
           </div>
         </div>
 

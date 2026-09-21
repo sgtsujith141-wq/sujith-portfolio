@@ -53,6 +53,11 @@
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
     background-color: var(--color-base);
+    /* The opening sequence and the mobile menu both lock body scroll.
+     * Without a reserved gutter the scrollbar disappears and the whole
+     * page jumps sideways — which is a layout shift, and was the only
+     * one left on the site. */
+    scrollbar-gutter: stable;
   }
 
   body {

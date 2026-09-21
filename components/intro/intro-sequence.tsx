@@ -180,9 +180,13 @@ export function IntroSequence() {
               {phase >= PHASES.SCAN && phase < PHASES.GRANTED ? (
                 <motion.div
                   key="scan"
-                  className="pointer-events-none absolute inset-x-0 h-px"
-                  initial={{ top: "-2%", opacity: 0 }}
-                  animate={{ top: "102%", opacity: [0, 1, 1, 0] }}
+                  /* Travels on a transform, not `top`. Animating `top`
+                   * relayouts the page every frame — it was the only
+                   * source of layout shift left on the site. Same sweep,
+                   * now compositor-only. */
+                  className="pointer-events-none absolute inset-x-0 top-0 h-px will-change-transform"
+                  initial={{ y: "-2vh", opacity: 0 }}
+                  animate={{ y: "102vh", opacity: [0, 1, 1, 0] }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 1.5, ease: "linear", times: [0, 0.1, 0.85, 1] }}
                   style={{
