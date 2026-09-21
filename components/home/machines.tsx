@@ -11,7 +11,6 @@ import { Reveal } from "@/components/animations/reveal";
 import { MaskLine } from "@/components/animations/mask-reveal";
 import { Parallax } from "@/components/animations/parallax";
 import { SectionHeader } from "@/components/ui/section-header";
-import { cn } from "@/lib/utils";
 
 /* ══════════════════════════════════════════════════════════════════════
  *  03 · MACHINES
@@ -21,12 +20,6 @@ import { cn } from "@/lib/utils";
  *  compact and personal on purpose — the full home-lab breakdown is a
  *  case study at /work/home-lab, not the home page's job.
  * ══════════════════════════════════════════════════════════════════════ */
-
-const KIND_LABEL: Record<string, string> = {
-  os: "Operating system",
-  mod: "Stripped-down build",
-  stack: "One on top of another",
-};
 
 export function Machines() {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -64,22 +57,16 @@ export function Machines() {
           lede={osStory.body}
         />
 
-        {/* What he has run. A list of names, nothing measured. */}
-        <ul className="mt-14 grid gap-px bg-line-soft sm:grid-cols-2 lg:grid-cols-4">
+        {/* What he has run. A shelf of names, nothing measured. */}
+        <ul className="mt-14 flex flex-wrap items-baseline gap-x-8 gap-y-4 border-y border-line-soft py-8 lg:gap-x-12">
           {osStory.systems.map((s, i) => (
-            <Reveal
-              as="li"
-              key={s.name}
-              delay={(i % 4) * 0.05}
-              className={cn(
-                "group bg-base p-5 t-base hover:bg-surface",
-                s.kind === "stack" && "sm:col-span-2 lg:col-span-1",
-              )}
-            >
-              <p className="label-xs text-ghost">{KIND_LABEL[s.kind]}</p>
-              <p className="mono mt-3 text-[15px] text-muted t-base group-hover:text-ink">
+            <Reveal as="li" key={s.name} delay={(i % 4) * 0.05} className="group">
+              <span className="display text-[clamp(1.3rem,3.4vw,2.4rem)] leading-none text-muted t-base group-hover:text-ink">
                 {s.name}
-              </p>
+              </span>
+              <span className="mono ml-2.5 align-super text-[9.5px] tracking-[0.14em] text-ghost">
+                {s.kind === "os" ? "OS" : s.kind === "mod" ? "BUILD" : "STACKED"}
+              </span>
             </Reveal>
           ))}
         </ul>
