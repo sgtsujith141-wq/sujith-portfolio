@@ -58,8 +58,10 @@ function layout(arch: Architecture) {
 
 const withArchitecture = projects.filter((p) => p.architecture);
 
-export function ArchitectureExplorer() {
-  const [slug, setSlug] = useState<ProjectSlug>(withArchitecture[0]!.slug);
+/** `only` pins the explorer to one project and hides the tab strip —
+ *  which is how it is used now that it lives inside a case study. */
+export function ArchitectureExplorer({ only }: { only?: ProjectSlug }) {
+  const [slug, setSlug] = useState<ProjectSlug>(only ?? withArchitecture[0]!.slug);
   const [active, setActive] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
   const project = projects.find((p) => p.slug === slug)!;
@@ -79,8 +81,15 @@ export function ArchitectureExplorer() {
 
   return (
     <div className="hairline bg-surface">
-      <div className="flex flex-wrap items-center gap-2 border-b border-line-soft p-3" role="tablist" aria-label="Project architecture">
-        {withArchitecture.map((p) => (
+      <div
+        className="flex flex-wrap items-center gap-2 border-b border-line-soft p-3"
+        role={only ? undefined : "tablist"}
+        aria-label={only ? undefined : "Project architecture"}
+      >
+        {only ? (
+          <span className="label">{project.name} — components</span>
+        ) : null}
+        {(only ? [] : withArchitecture).map((p) => (
           <button
             key={p.slug}
             role="tab"

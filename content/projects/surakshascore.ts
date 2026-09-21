@@ -28,7 +28,7 @@ export const criticalCeiling = 79;
 
 export const surakshascore: Project = {
   slug: "surakshascore",
-  index: "04",
+  index: "02",
   name: "SurakshaScore",
   tagline: "A personal digital hygiene scanner that turns device, account and privacy posture into one explainable security score.",
   category: "Security & privacy application",

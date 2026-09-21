@@ -2,7 +2,6 @@ import { ArrowUpRight, FileText, Mail, Phone } from "lucide-react";
 import { profile } from "@/content/personal";
 import { Reveal } from "@/components/animations/reveal";
 import { MaskLine } from "@/components/animations/mask-reveal";
-import { Magnetic } from "@/components/animations/magnetic";
 
 /* 07 · CONNECT — the field folds back to one point behind this. Direct
  * links only: a form that does not really send is worse than none. */
@@ -88,26 +87,28 @@ Happy to talk about networking, security, servers or anything I&rsquo;ve built. 
           </p>
         </Reveal>
 
-        <ul className="mt-14 grid gap-px bg-line-soft sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-16 divide-y divide-line-soft border-y border-line-soft">
           {links.map((l, i) => (
-            <Reveal as="li" key={l.id} delay={0.28 + i * 0.05} className="h-full bg-base">
-                <Magnetic>
-                  <a
-                    href={l.href}
-                    target={l.external ? "_blank" : undefined}
-                    rel={l.external ? "noreferrer" : undefined}
-                    className="group flex h-full min-h-[132px] flex-col justify-between p-6 t-base hover:bg-surface focus-visible:bg-surface"
-                  >
-                    <span className="flex items-center justify-between">
-                      <span className="label group-hover:text-ink">{l.label}</span>
-                      <l.icon
-                        className="h-4 w-4 text-faint t-base group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent-soft"
-                        aria-hidden
-                      />
-                    </span>
-                    <span className="mono mt-8 break-all text-sm text-ink">{l.handle}</span>
-                  </a>
-                </Magnetic>
+            <Reveal as="li" key={l.id} delay={0.28 + i * 0.05}>
+              <a
+                href={l.href}
+                target={l.external ? "_blank" : undefined}
+                rel={l.external ? "noreferrer" : undefined}
+                className="group flex flex-wrap items-baseline justify-between gap-x-8 gap-y-1 py-5 lg:py-6"
+              >
+                <span className="display text-[clamp(1.5rem,4vw,2.6rem)] leading-none text-muted t-base group-hover:text-ink">
+                  {l.label}
+                </span>
+                <span className="flex items-baseline gap-4">
+                  <span className="mono break-all text-sm text-faint t-base group-hover:text-muted">
+                    {l.handle}
+                  </span>
+                  <l.icon
+                    className="h-4 w-4 shrink-0 self-center text-ghost t-base group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent-soft"
+                    aria-hidden
+                  />
+                </span>
+              </a>
             </Reveal>
           ))}
         </ul>

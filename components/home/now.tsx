@@ -85,12 +85,16 @@ export function Now() {
           <Reveal>
             <h3 className="label">Along the way</h3>
           </Reveal>
-          <ul className="mt-6 grid gap-px bg-line-soft sm:grid-cols-2">
+          <ul className="mt-6 divide-y divide-line-soft border-y border-line-soft">
             {highlights.map((h, i) => (
-              <Reveal as="li" key={h.id} delay={i * 0.06} className="bg-base p-6 lg:p-7">
-                <p className="label-xs text-ghost">{h.where}</p>
-                <h4 className="display mt-3 text-xl text-ink">{h.title}</h4>
-                <p className="mt-3 text-sm leading-relaxed text-muted">{h.detail}</p>
+              <Reveal as="li" key={h.id} delay={i * 0.06}>
+                <div className="grid gap-2 py-6 sm:grid-cols-12 sm:gap-6">
+                  <div className="sm:col-span-5">
+                    <h4 className="display text-xl text-ink">{h.title}</h4>
+                    <p className="label-xs mt-2 text-ghost">{h.where}</p>
+                  </div>
+                  <p className="text-[15px] leading-relaxed text-muted sm:col-span-7">{h.detail}</p>
+                </div>
               </Reveal>
             ))}
           </ul>

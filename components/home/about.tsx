@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { about, interests, skills, skillsNote } from "@/content/personal";
 import { useLivingSystem } from "@/components/canvas/living-system";
 import { Reveal } from "@/components/animations/reveal";
-import { MaskLine } from "@/components/animations/mask-reveal";
 import { SectionHeader } from "@/components/ui/section-header";
 import { cn } from "@/lib/utils";
 import { DUR, EASE_OUT } from "@/lib/motion";
@@ -55,7 +54,15 @@ export function About() {
         <div className="mt-12 max-w-2xl space-y-6">
           {about.map((p, i) => (
             <Reveal key={i} delay={i * 0.07}>
-              <p className="text-[17px] leading-relaxed text-muted">{p}</p>
+              <p
+                className={
+                  i === 0
+                    ? "display text-[clamp(1.35rem,2.8vw,1.95rem)] leading-snug text-ink"
+                    : "text-[17px] leading-relaxed text-muted"
+                }
+              >
+                {p}
+              </p>
             </Reveal>
           ))}
         </div>
@@ -115,30 +122,36 @@ export function About() {
           </div>
         </div>
 
-        {/* What I've worked with */}
-        <div className="mt-24">
-          <Reveal>
-            <h3 className="label">What I&rsquo;ve worked with</h3>
-          </Reveal>
-          <ul className="mt-6 grid gap-px bg-line-soft md:grid-cols-3">
-            {skills.map((g, i) => (
-              <Reveal as="li" key={g.id} delay={i * 0.06} className="bg-base p-6 lg:p-7">
-                <h4 className="display text-lg text-ink">
-                  <MaskLine>{g.title}</MaskLine>
-                </h4>
-                <ul className="mt-4 space-y-2">
-                  {g.items.map((item) => (
-                    <li key={item} className="text-sm leading-relaxed text-muted">
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-            ))}
-          </ul>
-          <Reveal delay={0.1}>
-            <p className="mt-5 max-w-2xl text-xs leading-relaxed text-ghost">{skillsNote}</p>
-          </Reveal>
+        {/* What I've worked with — a specification, not three cards. */}
+        <div className="mt-24 grid gap-10 lg:grid-cols-12 lg:gap-14">
+          <div className="lg:col-span-3">
+            <Reveal>
+              <h3 className="label lg:sticky lg:top-28">What I&rsquo;ve worked with</h3>
+            </Reveal>
+          </div>
+          <div className="lg:col-span-9">
+            <dl className="divide-y divide-line-soft border-y border-line-soft">
+              {skills.map((g, i) => (
+                <Reveal key={g.id} delay={i * 0.06}>
+                  <div className="grid gap-2 py-5 sm:grid-cols-12 sm:gap-6">
+                    <dt className="display text-lg text-ink sm:col-span-4">{g.title}</dt>
+                    <dd className="sm:col-span-8">
+                      <ul className="flex flex-wrap gap-x-5 gap-y-1.5">
+                        {g.items.map((item) => (
+                          <li key={item} className="text-[15px] leading-relaxed text-muted">
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </dd>
+                  </div>
+                </Reveal>
+              ))}
+            </dl>
+            <Reveal delay={0.12}>
+              <p className="mt-6 max-w-2xl text-xs leading-relaxed text-ghost">{skillsNote}</p>
+            </Reveal>
+          </div>
         </div>
       </div>
     </section>

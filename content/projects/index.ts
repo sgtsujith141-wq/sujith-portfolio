@@ -10,12 +10,12 @@ import { aetherHealth } from "./aether-health";
  *  actually lives in; the MVP sits after SurakshaScore because it is told
  *  as that project's origin story. */
 export const projects: Project[] = [
-  phantomHq,
-  homeLab,
   cryptodrishti,
   surakshascore,
-  surakshascoreMvp,
+  homeLab,
   aetherHealth,
+  surakshascoreMvp,
+  phantomHq,
 ];
 
 export const projectBySlug = Object.fromEntries(projects.map((p) => [p.slug, p])) as Record<
