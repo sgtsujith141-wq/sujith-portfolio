@@ -1,112 +1,69 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Geist, Geist_Mono } from "next/font/google";
-import { profile } from "@/content/personal";
-import { LivingSystem } from "@/components/canvas/living-system";
-import { SkipLink } from "@/components/layout/skip-link";
-import { Footer } from "@/components/layout/footer";
+import { Doto, JetBrains_Mono } from "next/font/google";
+import { site } from "@/content/site";
+import { Background } from "@/components/background";
+import { Boot } from "@/components/boot";
+import { Runtime } from "@/components/runtime";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import "./globals.css";
 
-/* Fonts are self-hosted through next/font: no runtime request to Google.
- * All three are SIL Open Font License. Archivo carries a width axis that
- * the display style sets to 108 for the engineered, wide-set headline. */
-const archivo = Archivo({
+/* JetBrains Mono for everything; Doto only for the hero name and the
+ * large index numbers on project cards. Self-hosted through next/font. */
+/* Arrows, ✕ and the block cursor are in no Google subset; like the
+ * reference they fall back to the system monospace, not to Arial. */
+const jb = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-archivo",
+  weight: ["400", "500", "700", "800"],
+  variable: "--font-jb",
   display: "swap",
-  axes: ["wdth"],
+  fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "Liberation Mono", "monospace"],
+  adjustFontFallback: false,
 });
-
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
-
-function metadataBase(url: string): URL | undefined {
-  try {
-    return new URL(url);
-  } catch {
-    return undefined;
-  }
-}
+const doto = Doto({ subsets: ["latin"], weight: ["900"], variable: "--font-doto", display: "swap", fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "Liberation Mono", "monospace"], adjustFontFallback: false });
 
 export const metadata: Metadata = {
-  metadataBase: metadataBase(profile.meta.url),
-  title: { default: profile.meta.title, template: `%s — ${profile.name}` },
-  description: profile.meta.description,
-  applicationName: profile.name,
-  authors: [{ name: profile.name, url: profile.links.github }],
-  creator: profile.name,
-  keywords: [
-    "Sujith C",
-    "networking",
-    "cybersecurity",
-    "Linux",
-    "home lab",
-    "self-hosting",
-    "Debian",
-    "Tailscale",
-    "CSE student",
-    "BMSIT",
-  ],
-  openGraph: {
-    type: "profile",
-    title: profile.meta.title,
-    description: profile.meta.description,
-    siteName: profile.name,
-    url: profile.meta.url,
-    locale: "en_IN",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: profile.meta.title,
-    description: profile.meta.description,
-  },
+  metadataBase: new URL(site.url),
+  title: { default: site.title, template: `%s · ${site.name}` },
+  description: site.description,
+  applicationName: site.name,
+  authors: [{ name: site.name, url: "https://github.com/sgtsujith141-wq" }],
+  creator: site.name,
+  openGraph: { type: "profile", title: site.title, description: site.description, siteName: site.name, url: site.url, locale: "en_IN" },
+  twitter: { card: "summary_large_image", title: site.title, description: site.description },
   robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#090b0f",
+  themeColor: "#0b0b0c",
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
-/* Runs before first paint, so nothing flashes before the sequence owns
- * the screen. The opening plays on the home route only; every other
- * route starts in the finished state. No storage of any kind is read,
- * so a real reload always replays it. prefers-reduced-motion skips it
- * entirely, and the sequence itself advances the state from here. */
-const INTRO_GATE = `
-try {
-  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var home = location.pathname === '/' || location.pathname === '';
-  document.documentElement.setAttribute('data-intro', reduced || !home ? 'done' : 'pending');
-  if (!reduced && home && 'scrollRestoration' in history) history.scrollRestoration = 'manual';
-} catch (e) {
-  document.documentElement.setAttribute('data-intro', 'done');
-}
-`;
+/* Runs before first paint. Marks JS as present (so reveal states may start
+ * hidden) and, unless reduced motion is on, raises the intro cover before
+ * anything else can flash. If the intro never starts (a script error), the
+ * cover drops itself after four seconds. */
+const GATE = `(function(){var h=document.documentElement;h.classList.add('js');try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){h.classList.add('booting');setTimeout(function(){if(!window.__bootStarted)h.classList.remove('booting')},4000)}if('scrollRestoration' in history)history.scrollRestoration='manual'}catch(e){h.classList.remove('booting')}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${archivo.variable} ${geist.variable} ${geistMono.variable}`}
-      suppressHydrationWarning
-    >
+    <html lang="en" className={`${jb.variable} ${doto.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: INTRO_GATE }} />
-        <noscript>
-          {/* Without JS the sequence can never hand off, so show the site. */}
-          <style>{`.intro-root{display:none!important}#site{opacity:1!important;pointer-events:auto!important}[data-enter]{opacity:1!important;transform:none!important}`}</style>
-        </noscript>
+        <script dangerouslySetInnerHTML={{ __html: GATE }} />
       </head>
-      <body className="antialiased">
-        {/* One canvas for the whole site, mounted above the router so
-            moving between the home page and /work never resets it. */}
-        <LivingSystem>
-          <SkipLink />
-          {children}
-          <Footer />
-        </LivingSystem>
+      <body>
+        <a className="skip" href="#app">
+          Skip to content
+        </a>
+        <Background />
+        <Runtime />
+        <Boot />
+        <Header />
+        <main id="app">{children}</main>
+        <Footer />
       </body>
     </html>
   );

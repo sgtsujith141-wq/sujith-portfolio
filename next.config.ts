@@ -9,8 +9,12 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1600, 1920],
   },
-  experimental: {
-    optimizePackageImports: ["lucide-react", "motion"],
+  // The old /work pages moved to /projects.
+  async redirects() {
+    return [
+      { source: "/work", destination: "/projects", permanent: true },
+      { source: "/work/:slug", destination: "/projects/:slug", permanent: true },
+    ];
   },
   async headers() {
     return [

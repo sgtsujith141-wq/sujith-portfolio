@@ -1,19 +1,12 @@
 import type { MetadataRoute } from "next";
-import { profile } from "@/content/personal";
-import { projects } from "@/content/projects";
+import { projects, site } from "@/content/site";
 
-const origin = profile.meta.url.replace(/\/$/, "");
-const lastModified = new Date("2026-09-19");
+const lastModified = new Date("2026-10-02");
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
-    { url: origin, lastModified, changeFrequency: "monthly", priority: 1 },
-    { url: `${origin}/work`, lastModified, changeFrequency: "monthly", priority: 0.9 },
-    ...projects.map((p) => ({
-      url: `${origin}/work/${p.slug}`,
-      lastModified,
-      changeFrequency: "monthly" as const,
-      priority: 0.8,
-    })),
+    { url: site.url, lastModified, changeFrequency: "monthly", priority: 1 },
+    { url: `${site.url}/projects`, lastModified, changeFrequency: "monthly", priority: 0.9 },
+    ...projects.map((p) => ({ url: `${site.url}/projects/${p.slug}`, lastModified, changeFrequency: "monthly" as const, priority: 0.8 })),
   ];
 }
