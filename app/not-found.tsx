@@ -1,19 +1,14 @@
-import Link from "next/link";
-
 export default function NotFound() {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
-      <p className="label">Node not found</p>
-      <h1 className="display mt-4 text-[clamp(2.5rem,8vw,5rem)] text-ink">404</h1>
-      <p className="mt-4 max-w-md text-muted">
-        This address is not part of the system. The portfolio is a single page.
+    <div className="wrap nf">
+      <span className="lbl">404</span>
+      <h1 className="ptitle">Not found</h1>
+      <p className="pintro">That page does not exist. The projects all live on one page now.</p>
+      <p>
+        <a className="btn solid mag" href="/projects">
+          Explore all projects <span className="ar">→</span>
+        </a>
       </p>
-      <Link
-        href="/"
-        className="mt-8 inline-flex items-center gap-3 border border-line-strong px-5 py-3 text-sm text-ink transition-colors hover:border-accent hover:text-accent-soft"
-      >
-        Return to the system
-      </Link>
-    </main>
+    </div>
   );
 }
